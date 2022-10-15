@@ -768,4 +768,52 @@ stat_function(fun = function(x) dnorm(x, mean = mean, sd = sd) * n * binwidth,
 
 ```
 
+# Functions
+
+### dice
+```{r}
+dice <- c(1:6)
+
+myluck<- function(x){
+  myluck <- sample(dice, size = 1, replace = T)
+  return(myluck)
+}
+
+myluck()
+```
+### pick a name
+
+```{r}
+names <- c('saneesh','appu','sanusha')
+who <- function(x){
+  who <- sample(names, 1, T)
+  return(who)
+}
+
+who()
+```
+
+# find the lucky number
+
+```{r}
+numbers <- data_frame(number=c(3,2,4,5,6,8))   
+yourguess <- 3
+
+if (numbers %>% filter(number>=yourguess)) {
+  print('ggod')
+  }
+```
+# function to split
+```{r}
+
+df <- data.frame(name=as.factor(c('James Bond', 'Spider Man', 'Iron Man')))
+# df <- df %>% separate(name, c('Genus', 'Species'), sep = '([ ])')
+
+shorten <- function(df){
+  name_split <- df %>% separate(name, c('Genus', 'Species'), sep = '([ ])')
+  print(name_split)
+}
+
+shorten(df)
+```
 
