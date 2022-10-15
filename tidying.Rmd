@@ -345,6 +345,20 @@ data %>% group_by(treatment) %>% count(treatment)
 
 ```
 
+# case when new column  
+```{r}
+library(dplyr)
+library(stringr)
+feedback <- c('good_book', 'good_read', 'good_story', 'good for knowledge')
+book <- c('ramayana', 'bible', 'encyclopedia', 'Mbharatha')
+
+df <- data.frame(feedback, book)
+
+df %>%
+  mutate(response = case_when(str_starts(feedback, 'good') ~ 'good')) %>% 
+  select(book, response) %>% as_tibble()
+```
+
 
 
 
@@ -754,22 +768,4 @@ stat_function(fun = function(x) dnorm(x, mean = mean, sd = sd) * n * binwidth,
 
 ```
 
-# case when new column  
-```{r}
-d <- seq(as.Date("2022-01-01"), Sys.Date(), by = "day")
-
-df1 <- data.frame(
-  group = sample(3, 20, TRUE),
-  date1 = sample(d, 20),
-  date2 = sample(d, 20)
-)
-
-library(dplyr)
-df1 %>%
-  mutate(type = case_when(
-    group == 1 ~ 'good day',
-    group == 2 ~ 'okay day',
-    group == 3 ~ 'bad day'))
-
-```
 
