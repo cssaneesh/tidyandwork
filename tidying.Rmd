@@ -1,0 +1,775 @@
+---
+title: "tidying"
+author: "Saneesh"
+date: "1/24/2022"
+output: pdf_document
+---
+# packages
+
+```{r gapminder}
+# install.packages ('gapminder')
+library(gapminder)
+library(tidyverse)
+```
+
+# shortcuts
+
+alt+- will add <-  
+shift+ctrl+c to add # infront of a line  
+'----' for a header, so it is easy to navigate through the script  
+command +shift + m  
+ctrl+alt+i for new code chunk 
+# syntax
+Plain text  
+End a line with two spaces to start a new paragraph.  
+*italics* and _italics_  
+**bold** and __bold__  
+superscript^2^  
+~~strikethrough~  
+[link](www.rstudio.com) to rstudio
+
+# logical operations
+
+1==1 # equality  
+1!=3 #unequal  
+13<14 #13 smaller than 14  
+14>13 #14 bigger than 13  
+12>=0 #12 greater or equal to zero  
+12<=3 #12 smaller or equal to zero  
+
+# creating data.frame
+family  
+```{r echo=TRUE}
+name <- c('saneesh', 'sanusha', 'appu', 'kishan')
+weight <- c(63,48, 20, NA)
+height <- c(164, 150, NA, 75)
+family <- data.frame(name, weight, height)
+family %>% as_tibble()
+```
+
+#### data frame with unequal values 10 and 8
+```{r}
+library(tidyverse)
+data <- data.frame(sex=c(rep('female', 10), rep('male', 8)), 
+                   score=c(rnorm(n= 10, mean = 7.56, sd = 1.978), rnorm(n= 8, mean=7.75, sd= 1.631)))
+
+data
+
+data %>% group_by(sex) %>% 
+  summarise(score= n()) %>% 
+  mutate(freq=score/sum(score)*100)
+
+```
+
+
+# is.na
+```{r}
+# identify location of NAs in vector
+which(is.na(family))
+colSums(is.na(family)) 
+```
+
+# replace na
+```{r}
+mat <- matrix(sample(c(NA, 1:5), 50, replace = TRUE), 5)
+df <- as.data.frame(mat)
+df %>% replace(is.na(.), 0)%>% view()
+```
+
+# clean names
+
+```{r}
+# install.packages('janitor')
+library(janitor)
+
+id <- (c(1,1,2,2,3,3))
+Country <- c('Angola', 'Angola','Botswana', 'Botswana','Zimbabwe','Zimbabwe')
+year <- c('2006', '2007', '2008', '2009', '2010', '2006')
+bank.ratio <- c(24,25,38,34,42,49)
+Reserve.ratio <- c(77,59,64,65,57,86)
+broad.money <- c(163,188,317,361,150,288)
+
+
+bank <- data.frame(id, Country, year, bank.ratio, Reserve.ratio,broad.money)
+
+bank %>% view()
+  as_tibble()
+  
+bank <- bank %>% clean_names() # replaced . with _
+  
+glimpse(bank)  
+```
+
+```{r}
+bank <- bank %>% clean_names() # replaced . with _
+
+```
+
+
+**filter** bank data frame below such that it retains a country if a given id is satisfied e.g. filtering a data frame that has countries with id 1 and 2 only
+
+```{r}
+bank %>% 
+  filter(id%in% c(1,2)) %>% 
+  as_tibble()
+```
+**summarise** fund available with each countries
+```{r echo=TRUE}
+bank %>% 
+  group_by(country) %>% 
+  summarise(fund=sum(broad_money)) %>% 
+  as_tibble()
+
+```
+
+# count/ frequency
+```{r echo=TRUE}
+mtcars %>% 
+  count(am) %>% 
+  as_tibble()
+
+```
+```{r}
+mtcars %>% 
+  count(gear)
+```
+# rename column
+column: new name= old name
+
+```{r}
+iris %>% 
+  rename(sep.len=Sepal.Length)
+```
+
+# gapminder 
+
+
+```{r echo= TRUE}
+iris %>% as_tibble()
+```
+
+
+```{r echo= TRUE }
+summary(gapminder)
+str(gapminder)
+```
+
+# recode observation
+
+change name of observation--- mutate (variable=recode (variable, 'old name'='new name')))
+```{r}
+gapminder %>% 
+ mutate(country=recode(country, 'India'='IND' )) %>% 
+  filter(country=='IND')
+
+```
+
+
+# select
+```{r echo= TRUE}
+gapminder %>% 
+  select(year, country, gdpPercap) 
+```
+
+```{r}
+msleep %>% select(starts_with("sleep"))
+```
+
+# filter 
+
+```{r echo= TRUE }
+gapminder %>% 
+  select(year, country, lifeExp) %>% 
+  filter(country=="Eritrea", year>1950)
+```
+
+```{r echo=TRUE}
+gapminder %>% filter(country=="Canada") %>% head(3) # from gapminder data filter country Canada and show only 2 observations
+```
+
+```{r echo=TRUE }
+gapminder %>% filter(country!="Oman") %>% head(3) # from gapminder data filter all the other countries except Oman
+```
+
+multiple conditions
+```{r echo=TRUE}
+gapminder %>% 
+  filter(country=="Oman" &
+           year>1980 &
+           year<=2000) %>% head(4)
+```
+
+```{r echo=TRUE}
+gapminder %>% 
+  select(country, year) %>% 
+  filter(year>=1980, country=="India"|
+           country=="Oman"|
+           country=="Canada")
+```
+
+```{r}
+gapminder %>% filter(country!="Oman") %>% head(3) # from gapminder data filter all the other countires exept Oman
+
+```
+# drop
+```{r echo=TRUE}
+gapminder %>% 
+  select(-year,-pop) %>% 
+  head(5)
+
+```
+
+
+# group by & summarise
+```{r echo= TRUE}
+gapminder %>% 
+  filter(year==2007) %>% 
+  group_by(country) %>% 
+  summarise(meanLE=mean(lifeExp)) %>% 
+  arrange(meanLE,decreasing = TRUE)
+```
+```{r echo= TRUE}
+gapminder %>% 
+  group_by(country) %>% 
+  summarise(minLE=min(lifeExp)) %>% 
+  arrange(minLE,decreasing=FALSE)
+```
+
+grouped by continent, then summarise two things, first n=n() number of rows in which each continent are or the size of each group, then the mean of the mean of the lifeExp variable.
+
+```{r echo= TRUE}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarise(n=n(),
+            meanLife=mean(lifeExp))
+```
+```{r echo= TRUE}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarise(PopConti=sum(pop))
+```
+
+```{r}
+pets <- data.frame(names=c(rep('saneesh', 3), rep('appu', 2), 'sanusha'), 
+                   pet=c(rep('dog', 3), rep('cat', 2), 'tiger'), number=c(2,2,5,7,8,1), 
+                   size=c(rep('medium', 2), rep('small', 3), 'big'))
+
+pets
+
+library(tidyverse)
+
+pets %>% group_by(pet, size) %>% 
+  summarise(totalpet= sum(number))
+```
+
+# summarise
+
+```{r}
+library(tidyverse)
+plot <- c(rep(1,2), rep(2,4), rep(3,3))
+bird <- c('a','b', 'a','b', 'c', 'd', 'a', 'b', 'c')
+area <- c(rep(10,2), rep(5,4), rep(15,3))
+
+birdlist <- data.frame(plot,bird,area)
+birdlist
+
+# summarize the following data frame to a summary table.
+# option 1
+birdlist %>% 
+  group_by(plot) %>% 
+  summarise(bird = n(), area = unique(area))
+
+# option 2
+birdlist %>%
+  count(plot, area, name = "bird")
+```
+
+
+```{r echo= TRUE}
+gapminder %>% 
+  summarise(mean(lifeExp))
+```
+
+
+```{r echo= TRUE}
+gapminder %>%
+  summarise(range(lifeExp))
+```
+
+
+```{r echo= TRUE}
+gapminder %>% 
+  filter(country=="India") %>% 
+  group_by(country) %>% 
+  summarise(GDPmax=max(gdpPercap),
+            GDPmin=min(gdpPercap),
+            GDPmean=mean(gdpPercap))
+```
+
+
+# count/summarize
+```{r}
+library(tidyverse)
+plot <- c(rep(1,2), rep(2,4), rep(3,3))
+bird <- as.factor(c('a','b', 'a','b', 'c', 'd', 'a', 'b', 'c'))
+area <- c(rep(10,2), rep(5,4), rep(15,3))
+
+birdlist <- data.frame(plot,bird,area)
+birdlist
+
+#birdlist %>%    group_by(plot, area) %>%    mutate(count(bird))
+
+
+birdlist %>%
+  group_by(plot, area) %>%
+  dplyr::summarize(bird = n(), # when summarize doesn't work directly use it (dplyr::)like this
+            .groups = "drop") # to summarize of a column with reference to two other variables. 
+```
+
+# count sites
+
+```{r}
+treatment <- c(rep('ab',2), rep('bgrnf', 8), rep('bgpnf', 4))
+site <- c('ab1', 'ab2', 
+          rep('bgrnf1', 3), 
+          rep('bgrnf2', 2), 
+          'bgrnf3', 
+          'bgrnf4', 
+          'bgrnf5',
+          rep('bgpnf1', 2),
+          rep('bgpnf2', 2))
+data <- data.frame(treatment, site)
+library(tidyverse)
+# to find the site per each treatment
+data %>% group_by(treatment) %>% count(treatment)
+
+```
+
+
+
+
+# separate 
+text to columns
+```{r echo=TRUE}
+df <- data.frame(films = c("Spider_man", "James_bond", "Iron_man", "Bat_man"))
+df
+df1 <- df %>% 
+  separate(films, c("a", "b"), sep='([_])')
+df1
+```
+# unite
+```{r}
+df1 %>% unite("names", a:b, remove=FALSE)
+```
+
+# join
+```{r}
+df2 <- data.frame(id=c(1:4) ,films = c("Spider_man", "James_bond", "Iron_man", "Bat_man"))
+df3 <- data.frame(id=c(1:4) ,country= rep("us", 4))
+
+df4 <- left_join(df2, df3, by="id")
+df4
+
+
+```
+
+
+
+
+
+# across
+for multiple variables 
+```{r}
+library(tidyverse)
+srno <- c(1:2)
+film <- c("arabica", "robust")
+rate <- c("good", "better")
+lang_Eng <- c("yes", "yes")
+
+films <- data.frame(srno, film, rate, lang_Eng)
+
+str(films)
+
+films <- films %>% 
+  mutate(across(c(rate, lang_Eng), as.factor))
+
+str(films)
+
+```
+# everthing 
+select a key variable and everything
+
+```{r}
+library(gapminder)
+gapminder %>% select(pop, everything())
+```
+
+# toupper
+# tolower
+```{r}
+library(stringr)
+
+data <- data.frame(Dose.Cm=c("d1", "D2", "D3"),
+                Len.km=c("High", 'low', 'Low'))
+glimpse(data)
+
+data %>% mutate(Dose.Cm= tolower(Dose.Cm), Len.km=toupper(Len.km))
+
+```
+
+# factor
+
+```{r}
+data <- data.frame(Dose.Cm=c("d1", "D2", "D3"),
+                Len.km=c("high", 'low', 'medium'))
+data <- data %>% mutate(len= as.factor(Len.km))
+
+glimpse(data)
+```
+
+# change order of factor
+
+```{r}
+data %>% mutate(len= fct_relevel(len, c('low', 'medium', 'high')))
+```
+
+
+# parse_number
+This drops any non-numeric characters before or after the first number. The grouping mark specified by the locale is ignored inside the number.
+
+```{r}
+
+library(tidyverse)
+class <- c('8th', '9th', '10th')
+students <- c('25-30', '35-41', '21-28')
+school <- data.frame(class, students)
+school
+
+glimpse(school) # notice students is a binned variable it is a not a numeric.
+
+school %>% mutate(students= parse_number(students)) %>% glimpse()
+school %>% mutate(students= parse_number(students))
+# now students because number with first value of the column
+
+
+
+```
+
+# pivot longer
+```{r}
+library(tidyverse)
+
+rawdata <- data.frame(species_1=rnorm(n = 40, mean = 300, sd = 18.5), species_2=rnorm(40, 305, 16.7))
+
+
+data <- pivot_longer(data = rawdata, cols = species_1:species_2, names_to = 'species', values_to = 'weight')
+```
+
+
+# ggplot
+```{r}
+#sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
+df <- data.frame(dose=c("D0.5", "D1", "D2"),
+                len=c(4.2, 10, 29.5))
+```
+
+
+```{r}
+library(ggplot2)
+# Basic barplot
+p<-ggplot(data=df, aes(x=dose, y=len)) +
+  geom_bar(stat="identity")
+p
+   
+# Horizontal bar plot
+# p + coord_flip()
+```
+
+```{r}
+# Change the width of bars
+ggplot(data=df, aes(x=dose, y=len)) +
+  geom_bar(stat="identity", width=0.5)
+# Change colors
+ggplot(data=df, aes(x=dose, y=len)) +
+  geom_bar(stat="identity", color="blue", fill="white")
+# Minimal theme + blue fill color
+p<-ggplot(data=df, aes(x=dose, y=len)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  theme_minimal()
+p
+```
+
+# months
+```{r}
+library(lubridate)
+months <- seq(month(1:12)) # make moths
+months <- month.abb[months] # make abbriviations
+temperature <- c(10,12,22,32,35,30,33,28,29,25,19,14)
+myframe <- data.frame(months,temperature) # creating a new data frame
+
+library(tidyverse)
+glimpse(myframe)
+
+library(ggplot2)
+ggplot(myframe, aes(x=months, y=temperature, group=1))+
+  geom_line(col='blue')+
+  geom_point(col='red')+
+  ggtitle('Temperature of months')+ 
+  scale_x_discrete(limits = month.abb) # this will order months on the x axis
+
+```
+
+
+```{r}
+p + scale_x_discrete(limits=c("D0.5", "D2"))
+```
+
+```{r}
+# Outside bars
+ggplot(data=df, aes(x=dose, y=len)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=len), vjust=-0.3, size=3.5)+
+  theme_minimal()
+# Inside bars
+ggplot(data=df, aes(x=dose, y=len)) +
+  geom_bar(stat="identity", fill="steelblue")+
+  geom_text(aes(label=len), vjust=1.6, color="white", size=3.5)+
+  theme_minimal()
+```
+
+
+```{r}
+df2 <- data.frame(supp=rep(c("VC", "OJ"), each=3),
+                dose=rep(c("D0.5", "D1", "D2"),2),
+                len=c(6.8, 15, 33, 4.2, 10, 29.5))
+```
+
+```{r}
+ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
+  geom_bar(stat="identity", position=position_dodge())+
+  geom_text(aes(label=len), vjust=1.6, color="white",
+            position = position_dodge(0.9), size=3.5)+
+  scale_fill_brewer(palette="Paired")+
+  theme_minimal()
+```
+
+```{r}
+# Stacked barplot with multiple groups
+ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
+  geom_bar(stat="identity")
+# Use position=position_dodge()
+ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
+geom_bar(stat="identity", position=position_dodge())
+```
+
+```{r}
+# Change the colors manually
+p <- ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
+geom_bar(stat="identity", color="black", position=position_dodge())+
+  theme_minimal()
+# Use custom colors
+p + scale_fill_manual(values=c('#999999','#E69F00'))
+# Use brewer color palettes
+p + scale_fill_brewer(palette="Blues")
+```
+
+# hex plot
+
+```{r}
+library(tidyverse)
+# install.packages("hexbin")
+class <- c(rep('10th', 8))
+students <- c('10 to 15',
+              "15-20",
+              "17 to 24",
+              "20  to 25",
+              "25 to 30",
+              "30 to 40",
+              "45 to 47",
+              '50 to 55')
+latitude <- c(11.50897246,
+              11.48323136,
+              11.48719031,
+              11.46366611,
+              11.41097322,
+              11.52111154,
+              11.44491386,
+              11.46569568)
+longitude <- c(76.06032062,
+               76.06192685,
+               76.04266851,
+               76.04156575,
+               76.05075092,
+               76.02846331,
+               76.03084141,
+               76.01766216)
+school <- data.frame(class, students, latitude, longitude)
+
+school %>% mutate(students= parse_number(students)) %>% 
+  ggplot(aes(latitude, longitude, z= students))+
+  stat_summary_hex()+
+  scale_fill_viridis_c(alpha= 0.8)+
+  labs(fill='students', title = 'school students')
+```
+
+# Color Palettes  
+
+### Resources  
+
+* https://colorhunt.co/
+* https://coolors.co/
+* https://colorpalettes.net/
+* https://www.canva.com/colors/color-palettes/
+* https://color.adobe.com/de/create/color-wheel
+* https://mycolor.space/
+* http://colormind.io/
+
+```{r}
+#install.packages(c("tidyverse", "gapminder", "MetBrewer"))
+```
+
+
+libraries
+```{r}
+library(tidyverse)
+library(gapminder)
+# install.packages('MetBrewer')
+library(MetBrewer)
+
+```
+
+Plot the point plot using GDP per Capita as the x- axis and LE as the y axis. Numerical variable Population to control the size of each point.
+
+```{r}
+plot <- gapminder %>% 
+  filter (year==2007) %>% 
+  ggplot()+
+  labs(x= 'GDP per Capita',
+             y= 'Life Expectancy',
+       color= 'Population in millions',
+       size='Population in millions')+
+  theme_minimal()
+
+plot+ geom_point(aes(gdpPercap, lifeExp, size= pop/1000000))
+```
+
+To use color in the plot, assign the Population variable to the color aesthetic.
+Since nothing is specied, ggplot2 chooses a color spectrum for this numerical variable (shades of blue).
+
+```{r}
+plot + geom_point(aes(gdpPercap, lifeExp, size= pop/1000000, color= pop/1000000))
+```
+To control the color spectrum, we need to introduce a color scale. In the
+following plot, we have to provide a vector of hex color values. You would choose this if
+you got your colors from one of the mentioned above websites.
+
+```{r}
+plot + geom_point(aes(gdpPercap, lifeExp, size= pop/1000000, color= pop/1000000))+
+  scale_color_gradientn(colors = c("#003049", "#D62828", "#F77F00", "#FCBF49", "#EAE2B7"))
+```
+
+To apply one of the MetBrewer palettes, replace the hex-vector with a
+MetBrewer function. Within the function call, you provide the palette’s name,
+then several colors, and tell it that we need a continuous palette since it is a
+numerical variable.
+
+```{r}
+plot + geom_point(aes(gdpPercap, lifeExp, size= pop/1000000, color= pop/1000000))+
+  scale_color_gradientn(colors = met.brewer('Cross', n=500, type = 'continuous'))
+```
+
+You might also want to use color palettes with non-numerical variables. Let us
+assume we want to apply color to the Continent variable. This implies using a
+manual color scale and providing a MetBrewer palette.
+
+
+```{r}
+plot + geom_point(aes(gdpPercap, lifeExp, size= pop/1000000, color= continent))+
+  scale_color_manual(values = met.brewer('Navajo', 5))
+```
+
+Please note if you want to apply color to the fill aesthetic rather than the color
+aesthetic, consider using the scale_fill_manuel function instead of the
+scale_color_manuel. This is useful for boxplots or bar charts. 
+
+```{r}
+box <- gapminder %>% 
+  filter(gdpPercap< 60000) %>% 
+  ggplot(aes(continent, gdpPercap, color= year, fill= continent))+
+           geom_boxplot()+
+  theme_minimal()+ labs( x= 'Continent', y= 'GDP per Capita', fill= 'Continent')
+  
+```
+
+# scale fill manual
+# themes
+```{r}
+df <- data.frame(
+    Names=as.factor(c('Bacteria', 'Yeast', 'None')),
+    Quantity=c(2.5, 5.5, 7.5))
+
+library(ggplot2)
+library(tidyverse)
+df <- df %>% mutate(Names= fct_relevel(Names, c('Bacteria', 'Yeast', 'None')))
+
+ggplot(df, aes(Names, Quantity, fill= Names))+
+    geom_bar(stat = 'identity')+
+    scale_fill_manual(values = c('#110a62', '#fcd749','#b5b4b5'))+
+  labs(y='Necter pH', x= 'Microbe added to nectar')+
+  theme_classic()+
+    theme(legend.position = 'none', axis.ticks.x = element_blank())+
+  theme(axis.text = element_text(size = 22, color= 'black'))+
+theme(axis.line.x = element_blank())+
+  theme(axis.ticks = element_line(size = 1, color="black"), 
+   axis.ticks.length = unit(.5, "cm"))+
+  theme(text = element_text(size = 22))
+
+```
+
+
+### graphics
+```{r}
+x11() # opne a new window for graphics
+graphics.off() # close the new window 
+```
+
+# Normal distribution  
+
+Normal distribution, also known as the Gaussian distribution, is a probability distribution that is symmetric about the mean, showing that data near the mean are more frequent in occurrence than data far from the mean.
+
+```{r}
+library(tidyverse)
+n = 1000
+mean = 170 # cm
+sd = 6.35 # cm
+binwidth= 0.3
+set.seed(1234)
+df <- data.frame(x=rnorm(n, mean, sd))
+ggplot(df, aes(x = x, mean = mean, sd = sd, binwidth = binwidth, n = n))+
+    theme_bw()+
+  geom_histogram(binwidth = binwidth, 
+        colour = "white", fill = "lightblue", size = 0.1)+
+stat_function(fun = function(x) dnorm(x, mean = mean, sd = sd) * n * binwidth,
+    color = "darkred", size = 1)
+
+```
+
+# case when new column  
+```{r}
+d <- seq(as.Date("2022-01-01"), Sys.Date(), by = "day")
+
+df1 <- data.frame(
+  group = sample(3, 20, TRUE),
+  date1 = sample(d, 20),
+  date2 = sample(d, 20)
+)
+
+library(dplyr)
+df1 %>%
+  mutate(type = case_when(
+    group == 1 ~ 'good day',
+    group == 2 ~ 'okay day',
+    group == 3 ~ 'bad day'))
+
+```
+
