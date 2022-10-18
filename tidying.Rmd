@@ -61,6 +61,19 @@ data %>% group_by(sex) %>%
 
 ```
 
+# tibble
+```{r}
+library(tidyverse)
+years <- tribble(
+  ~Location, ~Year, ~Month, ~Day,
+  "Sydney", 2000, 9, 15,
+  "Athens", 2004, 8, 13,
+  "Beijing", 2008, 8, 8,
+  "London", 2012, 7, 27,
+  "Rio de Janeiro", 2016, 8, 5
+)
+```
+
 
 # is.na
 ```{r}
@@ -211,6 +224,34 @@ gapminder %>%
 gapminder %>% filter(country!="Oman") %>% head(3) # from gapminder data filter all the other countires exept Oman
 
 ```
+
+# filter multipe  using %in%
+```{r}
+gapminder %>% filter(country %in% c('Hungary','Iceland', 'Mongolia')) %>% view()
+
+target <- c('Hungary','Iceland', 'Mongolia')
+gapminder %>% filter(country %in% target) %>% view()
+```
+
+```{r}
+friends <- data.frame(Names=c('Saneesh', 'Appu', 'Shruti', 'Aradhana', 'Arathi', 'James Bond'),
+                      age=c(40,9, 25, 25, 25, 50))
+# data frame is friends
+# columns in friends are Names, Age, Height, etc.
+# Colum Name have 'Saneesh', 'Appu', 'Shruti', 'Aradhana', 'Arathi', 'James Bond'
+# We want to filter information related to Sanees and James Bond only, so we created a vector with
+# these names in it.
+
+target <- c('Appu', 'James Bond') #and then
+
+friends %>% filter(Names %in% target)
+# or 
+friends %>% filter(Names== 'Appu'| Names== 'James Bond')
+# or 
+friends %>% filter(Names %in% c('Appu', 'James Bond'))
+```
+
+
 # drop
 ```{r echo=TRUE}
 gapminder %>% 
@@ -793,16 +834,6 @@ who <- function(x){
 who()
 ```
 
-# find the lucky number
-
-```{r}
-numbers <- data_frame(number=c(3,2,4,5,6,8))   
-yourguess <- 3
-
-if (numbers %>% filter(number>=yourguess)) {
-  print('ggod')
-  }
-```
 # function to split
 ```{r}
 

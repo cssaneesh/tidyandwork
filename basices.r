@@ -17,7 +17,7 @@ pick_one <- function(x){
 
 pick_one()
 
-my_luck <- 5
+my_luck <- 2
 
 if (my_luck== luck()){
   print('Congratulations')
@@ -25,6 +25,7 @@ if (my_luck== luck()){
   print('Try again')
 }
 
+luck()
 
 
 # Column 1
@@ -43,6 +44,15 @@ box_2 <-
 str(box_1)
 str(box_2)
 
+box_2
+
+library(tidyverse)
+box_2 %>% filter(Model== c('Platina',  'DUKE 200'))
+
+box_2 %>% filter(Model== 'Platina'|'DUKE 200')
+
+names(box_2)
+sort(box_2$Model)
 
 library(ggplot2) 
 
