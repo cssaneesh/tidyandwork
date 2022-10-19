@@ -554,6 +554,19 @@ p<-ggplot(data=df, aes(x=dose, y=len)) +
 p
 ```
 
+# geom_vline
+
+```{r}
+df <- data.frame(dose=c("D0.5", "D1", "D2", 'pp', 'kk', 'rr'),
+                len=c(4.2, 10, 29.5, 12, 15, 23))
+library(ggplot2)
+
+ggplot(df, aes(len))+
+  geom_density()+
+  geom_vline(aes(xintercept = mean(len)), col='red', linetype= 'dashed')
+```
+
+
 # months
 ```{r}
 library(lubridate)
