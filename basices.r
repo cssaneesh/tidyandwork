@@ -99,5 +99,44 @@ posteriors <- insight::get_parameters(model.bayes)
 plot(posteriors)
 
 posteriors %>% mutate(Intercept= `(Intercept)`) %>% 
-  ggplot( aes(Power, Intercept))+
+  ggplot( aes(Power, Intercept))
   
+  
+  
+library(tidyverse)  
+
+score <- data.frame(class=c(2,3,4,5,6,7,8,9,10,11,12),
+                    no_students=c(9,28,59,165,244,206,146,60,24,5,1))  
+view(score)
+str(score)
+
+score <-
+  score %>% mutate(percent = round(no_students / sum(no_students) * 100, 2))
+
+ggplot(data = score, mapping = aes(x = class, 
+                                   y= no_students), col='red')+
+  geom_histogram(aes(),fill='lightpink2', col= 'red', stat= 'identity')
+
+boxplot(score$no_students)
+mean(score$no_students)
+
+str(score)
+summary(score)
+
+corn <- data.frame(treatment=c(rep('ctrl', 20), rep('exp', 20)), 
+                   units=c(380,283,356,350,345, 321,349,410,384,455,
+                           366,402,329,316,360,356,462,399,272,431, 
+                           361,434,406,427,430, 447,403,318,420,339,401,393,467,477,
+                           410,375,426,407,392,326))
+
+
+ggplot(corn, aes(treatment, units))+
+  geom_boxplot()
+
+corn.test <- t.test(corn$units)
+corn.test
+
+qqnorm(corn$units)
+
+
+?t.test

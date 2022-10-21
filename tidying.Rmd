@@ -21,7 +21,7 @@ command +shift + m
 ctrl+alt+i for new code chunk 
 # syntax
 Plain text  
-End a line with two spaces to start a new paragraph.  
+end a line with two spaces to start a new paragraph.  
 *italics* and _italics_  
 **bold** and __bold__  
 superscript^2^  
@@ -73,6 +73,26 @@ years <- tribble(
   "Rio de Janeiro", 2016, 8, 5
 )
 ```
+
+# tabyl
+
+[tabyl](https://cran.r-project.org/web/packages/janitor/vignettes/tabyls.html)
+
+```{r}
+
+
+
+library(janitor)
+data <- data.frame(HairEyeColor)
+
+data %>% tabyl(Hair, Eye) %>% 
+  adorn_percentages('row') %>% 
+  adorn_pct_formatting(digits = 2) %>% 
+  adorn_ns() %>% 
+  knitr::kable()
+
+```
+
 
 
 # is.na
@@ -151,7 +171,27 @@ column: new name= old name
 
 ```{r}
 iris %>% 
-  rename(sep.len=Sepal.Length)
+  rename(S.len=Sepal.Length,
+         Sp.= Species) %>% head(3)
+```
+
+## rename to lower
+```{r}
+iris %>% 
+  rename_with(tolower) %>% head(3)
+
+```
+
+## rename to lower specific columns
+
+```{r}
+iris %>% select_at(vars(Species, Petal.Length), tolower) %>% head(3)
+```
+
+# add column  
+```{r}
+library(tibble)
+iris %>% add_column(ob_no=1:150)
 ```
 
 # gapminder 
@@ -188,6 +228,33 @@ gapminder %>%
 msleep %>% select(starts_with("sleep"))
 ```
 
+## do not select
+
+```{r}
+iris %>% select(-Sepal.Length, -Species) %>% head(3)
+```
+
+or 
+
+```{r}
+iris %>% select(-c(Sepal.Length)) %>% head(3)
+```
+```{r}
+iris %>% select(!Sepal.Length) %>% head(3)
+```
+
+
+## `ends_with`
+```{r}
+iris %>% select(ends_with('length')) %>% head(3)
+```
+## `starts_with`
+```{r}
+iris %>% select(starts_with('Sepal')) %>% head(3)
+```
+
+
+
 # filter 
 
 ```{r echo= TRUE }
@@ -199,12 +266,39 @@ gapminder %>%
 ```{r echo=TRUE}
 gapminder %>% filter(country=="Canada") %>% head(3) # from gapminder data filter country Canada and show only 2 observations
 ```
-
+## except
 ```{r echo=TRUE }
 gapminder %>% filter(country!="Oman") %>% head(3) # from gapminder data filter all the other countries except Oman
 ```
+## omit
 
-multiple conditions
+```{r}
+iris %>% filter(Species!='setosa') %>% glimpse()
+```
+## omit multiple
+```{r}
+iris %>% filter(!Species %in% c('setosa', 'versicolor')) %>% glimpse()
+```
+
+## filter between
+```{r}
+iris %>% filter(Petal.Width >=2 & Petal.Width <= 5) %>% glimpse()
+```
+
+
+
+# pull
+```{r}
+iris %>% pull(Species) # returns vector values
+iris %>% select(Species) # returns a table with one column
+iris %>% select(everything()) %>% head(3)
+
+
+```
+
+
+
+## multiple conditions
 ```{r echo=TRUE}
 gapminder %>% 
   filter(country=="Oman" &
@@ -225,12 +319,12 @@ gapminder %>% filter(country!="Oman") %>% head(3) # from gapminder data filter a
 
 ```
 
-# filter multipe  using %in%
+## filter multipe  using %in%
 ```{r}
-gapminder %>% filter(country %in% c('Hungary','Iceland', 'Mongolia')) %>% view()
+gapminder %>% filter(country %in% c('Hungary','Iceland', 'Mongolia')) %>% head(3)
 
 target <- c('Hungary','Iceland', 'Mongolia')
-gapminder %>% filter(country %in% target) %>% view()
+gapminder %>% filter(country %in% target) %>% head (3)
 ```
 
 ```{r}
@@ -522,12 +616,13 @@ data <- pivot_longer(data = rawdata, cols = species_1:species_2, names_to = 'spe
 
 
 # ggplot
+
 ```{r}
 #sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization
 df <- data.frame(dose=c("D0.5", "D1", "D2"),
                 len=c(4.2, 10, 29.5))
 ```
-
+## bar plot 
 
 ```{r}
 library(ggplot2)
@@ -554,7 +649,7 @@ p<-ggplot(data=df, aes(x=dose, y=len)) +
 p
 ```
 
-# geom_vline
+## geom_vline
 
 ```{r}
 df <- data.frame(dose=c("D0.5", "D1", "D2", 'pp', 'kk', 'rr'),
@@ -564,6 +659,59 @@ library(ggplot2)
 ggplot(df, aes(len))+
   geom_density()+
   geom_vline(aes(xintercept = mean(len)), col='red', linetype= 'dashed')
+```
+
+## scatter plot with lm
+```{r}
+library(ggplot2)
+
+ggplot(iris, aes(Petal.Length, Petal.Width))+
+  geom_point()+
+  geom_smooth(method = 'lm')
+```
+### raincloud plot
+```{r}
+library(ggdist)
+library(tidyverse)
+library(tidyquant)
+mpg %>% filter(cyl %in% c(4,6,8)) %>% 
+  ggplot(aes( x= factor(cyl), y= hwy, fill=factor(cyl)))+
+# add half violin from `ggdist` package
+ggdist::stat_halfeye(
+  # custom bandwidth
+  adjust = 0.5,
+  # move geom to right
+  justification= -0.2,
+  # remove slab interval
+  .width = 0,
+  point_color= NA
+)+
+  # add boxplot
+  geom_boxplot(
+    width= 0.12,
+    # remove outliers 
+    outlier.colour = NA,
+    alpha= 0.5
+  )+
+  # add dot plots from `ggdist` package
+  ggdist::stat_dots(
+    #orientation of the plot
+    side= 'left',
+    # move geom to the left
+    justification= 1.1,
+    # adjust grouping of observation
+    binwidth=0.25
+  )+
+  # adjust theme
+  scale_fill_tq()+
+  theme_tq()+
+  labs(
+    title= 'raincloud plot',
+    subtitle= 'showing bimodel distribution of 6 cylinder  vehicles',
+    x= 'highway fuel efficiency',
+    y= 'cylinders'
+  )+
+  coord_flip()
 ```
 
 
@@ -860,4 +1008,105 @@ shorten <- function(df){
 
 shorten(df)
 ```
+
+# Rmarkdown  
+### knitr golbal options
+to apply to every chunk in the file
+
+inside the `chunk` write `knitr::opts_chunk$set(include= ,echo = , message= , warning= )`
+
+```{r}
+# knitr::opts_chunk$set(message = TRUE, echo = TRUE, warning = TRUE)
+```
+
+`include:` to show or hide code and results from appearing        
+`echo:` to show or hide code in the output but shows result       
+`message` to hide or show the messages generated by the code        
+`warning:` to show or hide warning generated by the code  
+
+these options can be written for individual chunks as well
+
+```{r echo=FALSE}
+sum(2,3) # here the knitr global option is over written inside the {}
+```
+
+
+# Heading 1  
+## Heading 2
+### Heading 3
+
+
+*italics*   
+_italic_  
+
+**bold**  
+__bold__  
+
+`plot()` to show r code/function  
+@Saneesh
+
+## blockquotes are writtedn after >
+
+> this is a blockquote  
+>--- Saneesh
+
+### plain code
+
+```
+hello
+```
+
+### unordered items  
+
+- item 1  
+- item 2  
+  - sub item 1a  
+  - sub item 2b  
+
+### ordered items
+1. Item 1  
+2. Item 2  
+   + Item 2a  # give two spaces before the +
+   + Item 2b  
+
+## writing mathematical functions
+
+### adding a link
+[mathematical notations](https://rpruim.github.io/s341/S19/from-class/MathinRmd.html)
+
+$by$  
+$\mu$  
+$\sum$   
+$a\pm b$    
+$x=y$  
+$x>y$  
+$x^2$  
+$x\le y$  
+$\sum_{n=1}^{10} n^2$  
+$x_{1}+ x_{2}+\cdots+x_{n}$  
+$|A|$  
+$A\subset B$  
+$A \subseteq B$  
+$A \cup B$  
+$A \cap B$  
+$P(A|B)$  
+$\alpha$  
+$\beta$  
+$\gamma$  
+$\theta$  
+$H_2O$
+ 
+
+### table
+using `knitr::kable()`
+
+```{r table, echo=FALSE}
+library(dplyr)
+iris %>% filter(Species %in% ('virginica'), Sepal.Length== 6.3) %>% 
+  knitr::kable()
+
+```
+
+
+
 
