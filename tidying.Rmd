@@ -859,6 +859,20 @@ numbers <- numbers %>% mutate(test1 = as.factor(test1)) %>%
 
 [sthda](http://sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization)
 
+
+add border to points
+```{r}
+library(ggplot2)
+ggplot(iris, aes(x= Petal.Length, 
+                   y= Petal.Width, fill= Species), alpha= 0.07)+
+  geom_point(size= 4,
+             shape= 21,
+             color= 'black',
+             stroke= 1.5)
+
+```
+
+
 ```{r}
 df <- data.frame(dose=c("D0.5", "D1", "D2"),
                 len=c(4.2, 10, 29.5))
