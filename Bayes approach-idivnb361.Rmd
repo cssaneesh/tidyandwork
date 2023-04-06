@@ -1,0 +1,234 @@
+---
+title: "Bayes approach"
+author: "Saneesh"
+date: "2022-12-02"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{R}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Generalized linear models
+
+```{R}
+library(brms)
+library(tidyverse)
+library(report)
+library(tidybayes)
+```
+
+
+
+```{R}
+iris <- iris
+```
+
+# Bayesian linear regression model
+
+```{R}
+names(iris)
+m0 <- brm(Sepal.Length ~ 1, # intercept only model
+          data = iris)
+
+summary(m0)
+```
+
+
+Family: gaussian 
+  Links: mu = identity; sigma = identity 
+Formula: Sepal.Length ~ 1 
+   Data: iris (Number of observations: 150) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     5.84      0.07     5.71     5.98 1.00     3585     2703
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.84      0.05     0.75     0.94 1.00     3040     2531
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+
+## Note: 
+### m0  
+
+As you can see, there is no information about the predictor variables or their relationships with the response variable, since there are no predictors in this model. The Data line simply reports the number of observations in the iris dataset, which is 150. The Estimate line for the population-level effects reports the estimated mean value of Sepal.Length, which is 5.8. The sigma parameter is the estimated residual standard deviation of the model, which is 0.8 in this case.
+
+```{R}
+m1 <- brm(Sepal.Length ~ Petal.Length,
+          data = iris)
+summary(m1)
+pp_check(m1)
+plot(m1)
+
+conditional_effects(
+    m1,
+    effects = 'Petal.Length', # conditional effects of Petal.Length
+    re_formula = NA,
+    method = 'fitted'
+  )
+```
+
+
+Where Sepal.Length is the response variable and Petal.Length is the predictor variable.  
+In other words, this model assumes that Sepal.Length is a function of Petal.Length, and estimates the relationship between the two variables. Specifically, the model estimates the intercept (i.e., the expected value of Sepal.Length when Petal.Length is zero) and the slope (i.e., the change in Sepal.Length associated with a one-unit increase in Petal.Length)  
+
+```{R}
+m2 <- brm(Sepal.Length ~ Species, # Species a categorical variable
+          data = iris)
+
+summary(m2)
+pp_check(m2)
+plot(m2)
+
+conditional_effects(
+  m2, 
+effects = 'Species', 
+re_formula = NA, 
+method = 'fitted' )
+```
+
+### m2  
+Where `Sepal.Length` is the response variable and `Species` is the predictor variable.  
+In other words, this model assumes that `Sepal.Length` is a function of `Species`, and estimates the relationship between the two variables. However, `Species` is a categorical variable, which means that it takes on a finite number of discrete values (in this case, `setosa`, `versicolor`, and `virginica`).
+
+```{r}
+m3 <- brm(Sepal.Length ~ Species + Petal.Length,
+          data = iris)
+
+summary(m3)
+pp_check(m3)
+plot(m3)
+conditional_effects(m3, effects =  'Species', re_formula = NA, method = 'fitted')
+conditional_effects(m3, effects = 'Petal.Length', re_formula = NA, method = 'fitted')
+```
+
+### m3    
+Where `Sepal.Length` is the response variable and `Species` and `Petal.Length` are the predictor variables.
+
+In other words, this model assumes that `Sepal.Length` is a function of both `Species` and `Petal.Length`, and estimates the relationship between the response and the two predictors. Since `Species` is a categorical variable with three levels (setosa, versicolor, and virginica), the model will estimate a separate intercept for each level of `Species`.
+
+The model will estimate one slope for `Petal.Length`, which represents the expected change in `Sepal.Length` associated with a one-unit increase in `Petal.Length`, regardless of the value of `Species`. In addition to the intercepts and slopes, the model will estimate the residual variance (i.e., the variation in `Sepal.Length` that is not explained by the predictors). This means that the effect of each predictors on the response variable is estimated separately (without an interaction), without taking into account any interaction effects between them.  
+
+
+```{r}
+m4 <- brm(Sepal.Length ~ Species * Petal.Length,
+          data = iris)
+
+summary(m4)
+pp_check(m4)
+plot(m4)
+
+conditional_effects(m4, 
+                    effects = 'Species:Petal.Length', 
+                    re_formula = NA,
+                    method = 'fitted'
+                    )
+```
+
+### m4  
+
+Where `Sepal.Length` is the dependent variable and `Species` and `Petal.Length` are the independent variables. The `*` operator in formula specifies an interaction term between `Species` and `Petal.Length`, which means that the effect of `Petal.Length` on `Sepal.Length` depends on the level of Species. In other words, the model allows for the possibility that the relationship between Sepal.Length and Petal.Length may be different for different species of iris. This model will show the relationship between `Sepal.Length` and `Species` and `Petal.Length`.
+
+
+## Assumptions:  
+ `y ~ intercept + b * Girth + error (error ~ Normal(0, sigma))`  
+ 
+ `y` is the function of some `intercept` and `a slope parameter`
+ 
+# Mixed-effects model with random slopes.   
+### Question  
+> What is the relationship between petal length and petal width, while allowing the intercept to vary across different species of iris?
+
+```{r}
+ggplot(iris, aes(Petal.Length, Petal.Width, col=Species ))+
+  geom_point()+
+  geom_smooth(method = 'lm')+
+  facet_wrap(~Species)
+```
+
+```{r}
+iris.model <- brm( Petal.Length ~ Petal.Width + (1 | Species),
+  data = iris, chains = 4, iter = 5000, warmup = 1000)
+
+summary(iris.model)
+pp_check(iris.model)
+plot(iris.model)
+
+conditional_effects(x = iris.model, 
+                    effects ='Petal.Width', 
+                    re_formula = NA, 
+                    method = 'fitted' )
+```
+
+### iris.model  
+The formula `Petal.Length ~ Petal.Width + (1 | Species)` specifies that `Petal.Length` is the dependent variable, and `Petal.Width` is the independent variable. The `(1 | Species)` term specifies that there is a random intercept term `(1)` for each level of `Species`. This is also known as a mixed-effects model because it includes both fixed effects (i.e., `Petal.Width`) and random effects (i.e., `(1 | Species)`)
+
+In other words, the model allows the intercept (i.e., the value of `Petal.Length` when `Petal.Width` is zero) to vary across the different species
+
+
+Understanding the summary output of this `iris.model`  
+
+Intercept: The estimated intercept is 2.57, with a 95% credible interval ranging from 0.71 to 4.52. This means that when the predictor variable is at zero (or when the predictor variable is not included in the model), the expected outcome variable is 2.57, on average.
+
+Petal.Width: The estimated effect of Petal.Width is 1.05, with a 95% credible interval ranging from 0.75 to 1.36. This means that for every one-unit increase in Petal.Width, the expected outcome variable increases by 1.05, on average.
+    
+In plain language, Petal.Width has a significant positive effect on the outcome variable. Specifically, for every one-unit increase in Petal.Width, the expected outcome variable increases by 1.05, on average. This can be useful information for horticulturalists who are interested in understanding the factors that influence the growth and development of plants. For example, if a horticulturalist is interested in breeding plants with larger petals, they could focus on selecting plants with wider petals, as this would increase the likelihood of producing offspring with larger petals.
+
+[Bayesian method](https://www.rensvandeschoot.com/tutorials/brms-started/)
+
+```{r}
+library(tidyverse)
+library(brms)
+data <- iris
+
+model.iris <-
+  brm(Sepal.Width ~ Sepal.Length * Species + (1 |
+                                                Species), data = data)
+summary(model.iris)
+
+```
+> summary  (model.iris)
+
+ Family: gaussian 
+  Links: mu = identity; sigma = identity 
+Formula: Sepal.Width ~ Sepal.Length * Species + (1 | Species) 
+   Data: data (Number of observations: 150) 
+  Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup draws = 4000
+
+Group-Level Effects: 
+~Species (Number of levels: 3) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     1.59      1.21     0.06     4.45 1.01     1033     1158
+
+Population-Level Effects: 
+                               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept                         -0.61      1.71    -4.30     3.01 1.01     1106     1238
+Sepal.Length                       0.80      0.11     0.59     1.02 1.00     1108     1320
+Speciesversicolor                  1.58      2.46    -3.87     7.03 1.01     1151     1258
+Speciesvirginica                   2.15      2.47    -2.90     8.02 1.01     1030      841
+Sepal.Length:Speciesversicolor    -0.48      0.13    -0.74    -0.23 1.00     1394     1395
+Sepal.Length:Speciesvirginica     -0.57      0.12    -0.82    -0.33 1.00     1158     1310
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.27      0.02     0.25     0.31 1.00     2621     1849
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+> Interpretation: The coefficient for Sepal.Length is 0.80, which means that for a one-unit increase in Sepal.Length, we can expect an increase of 0.80 units in Sepal.Width, holding all other variables constant.
+
+> Regarding the coefficient for Speciesversicolor. It suggests that on average, the Sepal.Width for the Speciesversicolor is expected to be 1.51 units higher than that of the baseline Species (which is not explicitly shown in the output, but it is likely the first level of the Species variable). However, the 95% credible interval for this coefficient includes 0, which suggests that this coefficient may not be significantly different from zero. Therefore, we cannot reliably conclude that the effect of Speciesversicolor on Sepal.Width is statistically significant.  
+
+> The coefficients for the interaction terms (Sepal.Length:Speciesversicolor and Sepal.Length:Speciesvirginica) suggest that the effect of Sepal.Length on Sepal.Width differs between the different species. Specifically, a one-unit increase in Sepal.Length is associated with a decrease of 0.48 units in Sepal.Width for Speciesversicolor and a decrease of 0.57 units in Sepal.Width for Speciesvirginica, holding all other variables constant. Both of these coefficients have credible intervals that do not include 0, indicating that they are statistically significant.

@@ -130,6 +130,7 @@ corn <- data.frame(treatment=c(rep('ctrl', 20), rep('exp', 20)),
                            410,375,426,407,392,326))
 
 
+library(ggplot2)
 ggplot(corn, aes(treatment, units))+
   geom_boxplot()
 
@@ -139,4 +140,51 @@ corn.test
 qqnorm(corn$units)
 
 
-?t.test
+# tiss data----
+library(tidyverse)
+
+arathi <- read.csv('Statistics.csv')
+shruthi <- read.csv('Friends_data.csv')
+
+arathi <- arathi %>% rename(Height= Height..in.cms.) %>% 
+  mutate(id= as.numeric(seq(from=1, to= (length(arathi$Name))))) %>% 
+  mutate(group= as.factor(rep('arathi', (length(arathi$Name)))))
+
+shruthi <- shruthi %>% mutate(id= as.numeric(seq(from=1, to= (length(shruthi$Name))))) %>% 
+  mutate(group= as.factor(rep('shruthi', (length(shruthi$Name)))))
+
+
+glimpse(arathi)
+glimpse(shruthi)
+
+head(arathi)
+head(shruthi)
+
+both <- bind_rows(shruthi, arathi)
+both
+
+ggplot(both, aes(x= group, y=Height,fill= group))+
+  geom_boxplot()
+
+both %>% group_by(group) %>% 
+  summarise(mean= mean(Height))
+
+both %>% t.test(Height~ group, data= . ) 
+
+model <- lm(Height ~ Age, data= both)
+summary(model)
+
+library(brms)
+# non informative prior
+friends.model <- brm(Height~Age, data = both, family= gaussian(link = "identity"))
+summary(friends.model)
+
+friends.model %>% posterior_interval(prob= c(0.9))
+post_results <- friends.model %>% posterior_samples()
+
+hist(post_results$b_Age)
+
+
+ggplot(both, aes(Age, Height))+
+  geom_point()+
+  geom_smooth(method = 'lm', se= FALSE)

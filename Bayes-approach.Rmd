@@ -1,0 +1,120 @@
+---
+title: "Bayes approach"
+author: "Saneesh"
+date: "2022-12-02"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Generalized linear models
+
+```{r}
+library(brms)
+library(tidyverse)
+library(report)
+library(tidybayes)
+```
+
+
+```{r}
+rm(list=ls())
+iris <- iris
+```
+## Linear model using `lm`   
+
+```{r}
+names(iris)
+m0 <- brm(Sepal.Length ~ 1, # intercept only model
+          data = iris)
+summary(m0)
+```
+
+## Note: 
+m0
+As you can see, there is no information about the predictor variables or their relationships with the response variable, since there are no predictors in this model. The Data line simply reports the number of observations in the iris dataset, which is 150. The Estimate line for the population-level effects reports the estimated mean value of Sepal.Length, which is 5.8. The sigma parameter is the estimated residual standard deviation of the model, which is 0.8 in this case.
+
+```{r}
+m1 <- brm(Sepal.Length ~ Petal.Length, # intercept only model
+          data = iris)
+summary(m1)
+```
+
+Where Sepal.Length is the response variable and Petal.Length is the predictor variable.  
+In other words, this model assumes that Sepal.Length is a function of Petal.Length, and estimates the relationship between the two variables. Specifically, the model estimates the intercept (i.e., the expected value of Sepal.Length when Petal.Length is zero) and the slope (i.e., the change in Sepal.Length associated with a one-unit increase in Petal.Length)  
+```{r}
+m2 <- brm(Sepal.Length ~ Species,
+          data = iris)
+```
+
+Where `Sepal.Length` is the response variable and `Species` is the predictor variable.  
+In other words, this model assumes that `Sepal.Length` is a function of `Species`, and estimates the relationship between the two variables. However, `Species` is a categorical variable, which means that it takes on a finite number of discrete values (in this case, `setosa`, `versicolor`, and `virginica`).
+
+
+## Assumptions:  
+ `y ~ inter + b * Girth + error (error ~ Normal(0, sigma))`  
+ 
+ `Height` is the function of some `intercept` and `a slope parameter` times `Girth`  with some error/noise and the error is distributed as a normal random variable with mean of zero and some standard deviation. 
+ 
+## Linear model using `brms`  
+
+```{r}
+trees.mod2 <- brm(Height ~ Girth, 
+                  data= trees)
+
+summary(trees.mod2)
+prior_summary(trees.mod2)
+plot(trees.mod2)
+```
+
+
+
+
+
+Mixed model with random slopes.  
+### Question  
+> Is there a general relationship between petal and sepal width? and how it differs by species?
+
+```{r}
+library(brms)
+library(tidyverse)
+library(report)
+
+ggplot(iris, aes(Petal.Width, Sepal.Width, colour= Species))+
+  geom_point()
+
+iris.model <- brm(Sepal.Width ~ Petal.Width + (1|Species), 
+                  data = iris)
+
+summary(iris.model)
+
+```
+
+Assessing model fit
+
+
+```{r}
+plot(iris.model)
+pp_check(iris.model)
+```
+
+Conditional effects
+
+```{r}
+iris.model.cef <-
+  conditional_effects(
+    iris.model,
+    effects = 'Petal.Width',
+    re_formula = NA,
+    method = 'fitted'
+  )
+iris.model.cef
+
+report(iris.model)
+```
+
+
