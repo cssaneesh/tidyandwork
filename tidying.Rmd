@@ -633,6 +633,54 @@ data %>% group_by(treatment) %>% count(treatment, name = '#sites')
 
 ```
 
+# count within years
+ 
+```{r}
+year <-  c(rep(2000, 4), 
+           rep(2001, 4), 
+           rep(2002, 4)
+           )
+site <- c(rep('a', 3), 
+          rep('b', 3), 
+          rep('c', 3),
+          rep('d', 3)
+          )
+
+fire <- c('yes', 'no', 'yes', 
+          'yes', 'no', 'no', 
+          'yes', 'yes', 'yes',
+          'yes', 'yes', 'yes')
+
+df <- data.frame(year, site, fire)
+
+df %>%
+  group_by(site) %>%
+  summarize(
+    Burnt_once = sum(fire == "yes" &
+                       year %in% c(2000, 2001, 2002)) == 1, # in these years look for 1 'yes'
+    Burnt_twice = sum(fire == "yes" &
+                        year %in% c(2000, 2001, 2002)) == 2, # in these years look for 2 'yes'
+    Burnt_thrice = sum(fire == "yes" &
+                         year %in% c(2000, 2001, 2002)) == 3 # in these years look for 3 'yes'
+  ) %>% # returns a logical vector
+  mutate(
+    Burnt_once = ifelse(Burnt_once, 1, 0),
+    Burnt_twice = ifelse(Burnt_twice, 1, 0),
+    Burnt_thrice = ifelse(Burnt_thrice, 1, 0)
+  ) %>% # convert logical response to numeric
+  summarise( # summarise data
+    across( # specifycolumns
+      where(is.numeric), # select columns with numeric ones
+      ~ sum( # selected column using the ~ formula notation
+        .x, # for each selected columns
+        na.rm = TRUE))) # remove any missing values before calculating the sum
+```
+
+
+
+
+
+
 # case when new column  
 ```{r}
 library(dplyr)
@@ -860,7 +908,7 @@ numbers <- numbers %>% mutate(test1 = as.factor(test1)) %>%
 [sthda](http://sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization)
 
 
-add border to points
+## add border to points  
 ```{r}
 library(ggplot2)
 ggplot(iris, aes(x= Petal.Length, 
@@ -1508,8 +1556,22 @@ india+
 
 ```
 
+# ggflowchart  
 
 
+```{r}
+# install.packages("ggflowchart")
+library(ggflowchart)
+
+data <- tibble::tibble(from = c("A", "A", "A", "B", "C", "F"),
+                       to = c("B", "C", "D", "E", "F", "G"))
+
+ggflowchart(data)
+
+```
+
+[talk](https://www.youtube.com/watch?v=_2miUEt81nI)
+[blog](https://nrennie.rbind.io/blog/introducing-ggflowchart/)
 
 # Functions
 
@@ -1551,6 +1613,23 @@ shorten <- function(df) {
 
 shorten(df)
 ```
+
+# web scraping
+
+```{r}
+library(rvest)
+page <- read_html("https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population")
+
+tables <- html_table(page)
+typeof(tables)
+unlist(tables)
+
+table2 <- as.data.frame(tables[[2]])
+head(table2,2)
+
+```
+
+
 
 # Rmarkdown  
 ## knitr golbal options
