@@ -2,66 +2,144 @@
 title: "Tidying"
 author: "Saneesh"
 output:
-  pdf_document: default
-  html_document:
-    df_print: paged
-always_allow_html: true
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
 urlcolor: blue
 ---
 
 
 ```{r setup, include=FALSE}
+library(knitr)
+library(formatR)
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(tidy.opts = list(width.cutoff=80), tidy = TRUE) ## Set so that long lines in R will be wrapped:
-
-
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff=60), tidy = TRUE) ## Set so that long lines in R will be wrapped:
 ```
 
+# Shortcuts
 
+`alt` + `-` will add `<-`  an assignment operator 
+`Shift` + `ctrl` + `c` to add `#` in front of a line   
+`----` or four dashes for a header, so it is easy to navigate through the script  
+`command`/`Ctrl` + `Shift` + `m` for pipe `%>%`  
+`Ctrl`+ `Alt` + `i` for new code chunk  
 
-# shortcuts
+# Rmd syntax
 
-alt+- will add <-  
-shift+ctrl+c to add # infront of a line  
-'----' for a header, so it is easy to navigate through the script  
-command +shift + m  for pipe ` %>%` 
-ctrl+alt+i for new code chunk  
-
-# syntax  
 Plain text  
-end a line with two spaces to start a new paragraph.  
-*italics* and _italics_  * text * or _ text _ (without gap `*`text`*`)
-**bold** and __bold__  ** text ** or __ text __ (without gap `**`text`**`)
-superscript^2^   superscript`^`2`^`
-~~strikethrough~  
+End a line with two spaces to start a new paragraph.  
+For *italics* `*text*` or `_text_` (without gap `*`text`*`)    
+For **bold** `**text**`(without gap `**`text`**`)  
+superscript^2^ superscript`^`2`^`   
+~Strikethrough~ `~Strikethrough~`  
 
-[link](https://posit.co/) to rstudio (`[text]` and without gap `(paste link with  `http://`)` )
+More about [R Markdown](https://bookdown.org/yihui/rmarkdown/)  
+More about [PDF document](https://bookdown.org/yihui/rmarkdown/pdf-document.html)
 
-# logical operations
+Adding web link to a text: [ConservationPlus](https://conservationplus.weebly.com/) to my web page e.g., `[text] and without gap (paste link with https://conservationplus.weebly.com/)`
 
-1==1      # equality  
-1!=3      # unequal  
-13<14     # 13 smaller than 14  
-14>13     # 14 bigger than 13  
-12>=0     # 12 greater or equal to zero  
-12<=3     # 12 smaller or equal to zero  
+# Logical operations
 
-# creating data.frame
-family  
+1==1 \# equal\
+1!=3 \# unequal\
+13\<14 \# 13 smaller than 14\
+14\>13 \# 14 bigger than 13\
+12\>=0 \# 12 greater or equal to zero\
+12\<=3 \# 12 smaller or equal to zero
+
+# Creating data.frame
+
+i.e. family
+
 ```{r, echo=FALSE, include=FALSE}
 library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(styler)
 ```
 
-```{r}
+```{r same.family}
 name <- c('saneesh', 'sanusha', 'appu', 'kishan')
 weight <- c(63,48, 20, NA)
 height <- c(164, 150, NA, 75)
 family <- data.frame(name, weight, height)
 family %>% as_tibble()
+
+same.family <- data.frame(
+  name = c('saneesh', 'sanusha', 'appu', 'kishan'),
+  weight = c(63, 48, 20, NA),
+  height = c(164, 150, NA, 75)
+)
+
 ```
 
-#### data frame with unequal values 10 and 8
+## Abundance
+
+```{r abundance}
+Community <-  c(rep('A', 3), rep('B', 3))
+Species <- rep(c('X', 'Y', 'Z'), 2)
+Count <- c(100, 0, 50, 50, 30, 40)
+
+df <- data.frame(Community, Species, Count)
+
+# abundance refers to the total number of individuals of different species within each community. It represents the quantity or total count of individuals present.
+
+abundance <- df %>%
+  group_by(Community) %>%
+  summarise(Total_abundance = sum(Count))
+
+# Species richness, on the other hand, refers to the total number of unique species present in each community. It represents the diversity of species within a community.
+
+richness <- df %>%
+  group_by(Community) %>%
+  filter(Count > 0) %>%
+  distinct(Species) %>%
+  summarise(Richness = n())
+```
+
+
+## Proportion
+
 ```{r}
+tree <- c('a', 'b', 'c', 'd')
+treatment <- c('fire', 'no_fire')
+
+
+data.frame(tree= sample(tree, 20, replace = T),
+                 treatment= sample(treatment, 20, replace = T),
+                 flower= rbinom(20, 3, prob = 0.30)) %>%
+  group_by(tree, treatment, flower) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+ mutate(prop = count / sum(count)) %>% 
+  ggplot(aes(x= flower, y= prop, fill= tree))+
+  geom_bar(stat= 'identity', position = 'dodge')+
+  facet_wrap(~treatment)
+```
+
+
+
+## Zero count
+
+```{r, count zeros}
+library(dplyr)
+
+df <- data.frame(
+  tree = c(rep('a', 4), rep('b', 4)),
+  seeds = c(0, 0, 0, 1, 2, 3, 0, 0)
+)
+
+zero_counts <- df %>%
+  group_by(tree) %>%
+  summarise(zero_count = sum(seeds == 0))
+
+print(zero_counts)
+```
+
+
+## Data frame with unequal values 10 and 8
+
+```{r dataframe}
 library(tidyverse)
 data <- data.frame(sex=c(rep('female', 10), rep('male', 8)), 
                    score=c(rnorm(n= 10, mean = 7.56, sd = 1.978), rnorm(n= 8, mean=7.75, sd= 1.631)))
@@ -74,8 +152,16 @@ data %>% group_by(sex) %>%
 
 ```
 
-# tibble
-```{r}
+## Name the unnamed first column of a data.frame
+
+```{r naming}
+# newdf <- rownames_to_column(df, var = "name to an unnamed")
+```
+
+
+# Creating a tibble
+
+```{r Tibble}
 library(tidyverse)
 years <- tribble(
   ~Location, ~Year, ~Month, ~Day, ~Lenght,
@@ -85,25 +171,17 @@ years <- tribble(
   "London", 2012, 7, 27,13.1212,
   "Rio de Janeiro", 2016, 8, 5,65.00
 )
-```
 
-# table  
-using `knitr::kable()`
-
-```{r table, echo=FALSE}
-library(dplyr)
-iris %>% filter(Species %in% ('virginica'), Sepal.Length== 6.3) %>% 
-  knitr::kable()
-
+# write.csv(years, file = 'years.csv', row.names = FALSE) # without index use row.names = FALSE
 ```
 
 ## tabyl
 
 [tabyl](https://cran.r-project.org/web/packages/janitor/vignettes/tabyls.html)
 
-## mutate round  
+## mutate round
 
-```{r}
+```{r table}
 # run previous code chunk
 library(gt)
 years %>% gt()
@@ -117,8 +195,7 @@ years %>%
   opt_table_outline(style = "solid", width = px(2))
 ```
 
-
-```{r}
+```{r formating}
 library(janitor)
 data <- data.frame(HairEyeColor)
 
@@ -130,27 +207,29 @@ data %>% tabyl(Hair, Eye) %>%
 
 ```
 
-
-# is.na
-```{r}
+# Data cleaning
+## Find NAs
+```{r nas}
 # identify location of NAs in vector
 which(is.na(family))
 colSums(is.na(family)) 
 ```
 
-## replace na  
-```{r}
+## Replace na
+
+```{r replace na}
 mat <- matrix(sample(c(NA, 1:5), 50, replace = TRUE), 5)
 df <- as.data.frame(mat)
-df %>% replace(is.na(.), 0)%>% view()
+df %>% replace(is.na(.), 0)%>% View()
 ```
 
-## drop na  
+## Drop na
+
 see spread & gather
 
-# clean names  
+## Clean names
 
-```{r}
+```{r clean names}
 # install.packages('janitor')
 library(janitor)
 
@@ -164,28 +243,23 @@ broad.money <- c(163,188,317,361,150,288)
 
 bank <- data.frame(id, Country, year, bank.ratio, Reserve.ratio,broad.money)
 
-bank %>% view()
-  as_tibble()
-  
 bank <- bank %>% clean_names() # replaced . with _
   
 glimpse(bank)  
 ```
 
-```{r}
-bank <- bank %>% clean_names() # replaced . with _
-
-```
-
+## Filter  
 **filter** bank data frame below such that it retains a country if a given id is satisfied e.g. filtering a data frame that has countries with id 1 and 2 only
 
-```{r}
+```{r Filter1}
 bank %>% 
   filter(id %in% c(1,2)) %>% 
   as_tibble()
 ```
+
 **summarise** fund available with each countries
-```{r echo=TRUE}
+
+```{r tibble1}
 bank %>% 
   group_by(country) %>% 
   summarise(fund=sum(broad_money)) %>% 
@@ -193,45 +267,46 @@ bank %>%
 
 ```
 
+## Rename column
 
-# rename column
 column: new name= old name
 
-```{r}
+```{r rename}
 iris %>% 
   rename(S.len=Sepal.Length,
          Sp.= Species) %>% head(3)
 ```
 
-## rename to lower
-```{r}
+## Rename to lower
+
+```{r rename to low}
 iris %>% 
   rename_with(tolower) %>% head(3)
-
 ```
 
-## rename to lower specific columns
+## Rename to lower specific columns
 
-```{r}
+```{r rename specific}
 iris %>% select_at(vars(Species, Petal.Length), tolower) %>% head(3)
 ```
-## add name to a nameless column
-```{r}
+
+## Add name to a nameless column
+
+```{r tibble2}
 library(tidyverse)
 mtcars <- mtcars %>% as_tibble(rownames="cars")
 ```
 
+## Add column
 
-# add column  
-```{r}
+```{r column}
 library(tibble)
 iris %>% add_column(ob_no=1:150) %>% head(5)
 ```
 
-```{r echo= TRUE}
+```{r tibble3, echo= TRUE}
 iris %>% as_tibble() %>% head(3)
 ```
-
 
 ```{r echo= TRUE }
 library(gapminder)
@@ -239,21 +314,22 @@ summary(gapminder)
 str(gapminder)
 ```
 
-# recode observation
+## Re-code observation (recode)
 
 change name of observation--- mutate (variable=recode (variable, 'old name'='new name')))
-```{r}
+
+```{r recode}
 gapminder %>% 
  mutate(country=recode(country, 'India'='IND' )) %>% 
   filter(country=='IND') %>% head(3)
 
 ```
 
-# convert numeric values to a binary (Yes/No)  
-To convert all non-zero numeric values to "Yes"
-to convert zero values to "No"
+## Convert numeric values to a binary (Yes/No)
 
-```{r}
+To convert all non-zero numeric values to "Yes" to convert zero values to "No"
+
+```{r binary}
 df <- data.frame(name=c('saneesh', 'sanusha', 'appu', 'jaru'),
                  sex=c(2,0,5,8))
 df
@@ -265,46 +341,40 @@ df %>% mutate(sex1= ifelse(sex != 0, "Male", "Female"))
 
 The `ifelse()` function is used to check whether each value in the "sex" column is non-zero. If it is, the value is replaced with "Yes". If not, the value is replaced with "No".
 
+## Select
 
-# select
-```{r echo= TRUE}
+```{r select, echo= TRUE}
 gapminder %>% 
   select(year, country, gdpPercap)  %>% head(3)
-```
 
-```{r}
 msleep %>% select(starts_with("sleep")) %>% head(3)
 ```
 
-## do not select
+## Do not select
 
-```{r}
+```{r dont select}
 iris %>% select(-Sepal.Length, -Species) %>% head(3)
-```
 
-or 
-
-```{r}
 iris %>% select(-c(Sepal.Length)) %>% head(3)
-```
-```{r}
+
 iris %>% select(!Sepal.Length) %>% head(3)
 ```
 
-
 ## `ends_with`
-```{r}
+
+```{r endswith}
 iris %>% select(ends_with('length')) %>% head(3)
 ```
+
 ## `starts_with`
-```{r}
+
+```{r starts_with}
 iris %>% select(starts_with('Sepal')) %>% head(3)
 ```
 
+## Filter
 
-# filter 
-
-```{r echo= TRUE }
+```{r filter, echo= TRUE }
 gapminder %>% 
   select(year, country, lifeExp) %>% 
   filter(country=="Eritrea", year>1950)  %>% head(3)
@@ -313,31 +383,35 @@ gapminder %>%
 ```{r echo=TRUE}
 gapminder %>% filter(country=="Canada") %>% head(3) # from gapminder data filter country Canada and show only 2 observations
 ```
-## except
-```{r echo=TRUE }
+
+## Except
+
+```{r except, echo=TRUE }
 gapminder %>% filter(country!="Oman") %>% head(3) # from gapminder data filter all the other countries except Oman
 ```
-## omit
 
-```{r}
+## Omit
+
+```{r omit}
 iris %>% filter(Species!='setosa') %>% glimpse()
 ```
 
-## filter multiple
+## Filter multiple
 
-```{r}
+```{r filter multiple}
 iris %>% select(Species) %>% 
   distinct(Species) %>% 
   filter(Species %in% c('setosa', 'versicolor')) %>% head(3)
 ```
 
-## filter multipe  
+
+
 using a vector, save the names as a vector and give it to `%in%`
+
 ```{r}
 target <- c('Hungary','Iceland', 'Mongolia')
 gapminder %>% filter(country %in% target) %>% head (3)
 ```
-
 
 ```{r df for %in%}
 friends <-
@@ -361,26 +435,31 @@ friends %>% filter(Names %in% c('Appu', 'James Bond'))
 ```
 
 ## omit multiple
+
 ```{r}
 iris %>% filter(!Species %in% c('setosa', 'versicolor')) %>% glimpse()
 ```
 
 ## filter between
+
 ```{r}
 iris %>% filter(Petal.Width >=2 & Petal.Width <= 5) %>% glimpse()
 ```
 
-## filter matching  
+## filter matching
 
 ```{r}
 library(tidyverse)
+library(dplyr)
 mtcars <- mtcars %>% rownames_to_column
 mtcars %>%
   filter(str_detect(rowname, 'Merc')) %>% head(3) # filter only 'Merc'
 
 mtcars %>% filter(!str_detect(rowname, 'Merc')) %>% head(3) # filter everything except 'Merc'
 ```
+
 ## filter distinct
+
 To remove or exclude all entries in the "name" column of your data frame that have 1 in the "pref" column, you can use the `filter()` and `distinct()` functions from the dplyr
 
 ```{r}
@@ -394,7 +473,9 @@ df %>%
   filter(!any(pref == 1)) %>%
   ungroup()
 ```
+
 or, if you have multiple rows with the same name but different values in the "pref" column, the code above will remove all rows with that name if any of them have 1 in the "pref" column. If you want to remove only the rows with 1 in the "pref" column, but keep the other rows with the same name, you can modify the code as follows:
+
 ```{r}
 df %>%
   group_by(name) %>%
@@ -402,21 +483,22 @@ df %>%
   ungroup()
 ```
 
-# pull
+## Pull
+
 ```{r}
 iris %>% pull(Species) %>% head(3) # returns vector values
 iris %>% select(Species) %>% head (3) # returns a table with one column
 iris %>% select(everything()) %>% head(3)
 ```
 
-# multiple conditions
+## multiple conditions
+
 ```{r echo=TRUE}
 gapminder %>% 
   filter(country=="Oman" &
            year>1980 &
            year<=2000) %>% head(4)
 ```
-
 
 ```{r echo=TRUE}
 gapminder %>%
@@ -432,7 +514,8 @@ gapminder %>% filter(country != "Oman") %>% head(3) # from gapminder data filter
 
 ```
 
-# drop
+## drop
+
 ```{r echo=TRUE}
 gapminder %>% 
   select(-year,-pop) %>% 
@@ -440,8 +523,8 @@ gapminder %>%
 
 ```
 
+## group by & summarise
 
-# group by & summarise
 ```{r echo= TRUE}
 gapminder %>%
   filter(year == 2007) %>%
@@ -465,6 +548,7 @@ gapminder %>%
   summarise(n=n(),
             meanLife=mean(lifeExp))
 ```
+
 ```{r echo= TRUE}
 gapminder %>% 
   group_by(continent) %>% 
@@ -485,12 +569,12 @@ pets
 pets %>% group_by(pet, size) %>%
   summarise(totalpet = sum(number))
 ```
+
 ## grouping with conditions
 
 If we want make a 'new column' with values from 'number' only if 'sp.name' 'a' or any other values has the following responses 'young' and 'adult', if not enter 0 in the 'new column'.
 
 You need to have groups with any of stage == "young" & "adult" (group level conditions) and stage == "adult" (row-level condition):
-
 
 ```{r, include=FALSE}
 df <- data.frame(
@@ -513,7 +597,7 @@ df %>%
                          any(stage == 'adult') & stage == 'adult') * number)
 ```
 
-# summarise
+## summarise
 
 ```{r}
 library(tidyverse)
@@ -535,18 +619,15 @@ birdlist %>%
   count(plot, area, name = "bird")
 ```
 
-
 ```{r echo= TRUE}
 gapminder %>% 
   summarise(mean(lifeExp))
 ```
 
-
 ```{r echo= TRUE}
 gapminder %>%
   summarise(range(lifeExp))
 ```
-
 
 ```{r echo= TRUE}
 gapminder %>%
@@ -560,6 +641,7 @@ gapminder %>%
 ```
 
 ## remove duplicates from a column and summarise
+
 ```{r}
 df <- data.frame(
   name = c('a', 'a', 'b', 'c'),
@@ -574,14 +656,29 @@ df_new <- df %>%
   ungroup()
 ```
 
+## find and remove duplicates from a dataframe
 
+```{r}
+library(dplyr)
+library(hablar)
 
-# count/summarize
+df <- tibble(a = c(1, 1, 'a', 2, 2, 2, 4),
+             b = c('a', 'a', 1, 'b', 'b', 'b', 'c'))
+df %>% print ()
+
+df %>% find_duplicates()
+
+df %>% distinct() %>% print ()
+
+```
+
+## count/summarize
+
 ## count name column
+
 ```{r}
 iris %>% count(Species, name = 'how many')
 ```
-
 
 ```{r echo=TRUE}
 mtcars %>%
@@ -589,12 +686,28 @@ mtcars %>%
   as_tibble()
 
 ```
+
 ```{r}
 mtcars %>% 
   count(gear, name = 'no. gear')
 ```
 
+## New column with paste
+
 ```{r}
+library(dplyr)
+
+# Create a data frame with two columns named 'a' and 'b'
+df <- data.frame(a = c("red", "blue", "green"),
+                 b = c(1, 2, 3)
+                 )
+
+# Create a new column named 'c' by combining values from 'a' and 'b'
+df <- df %>% mutate(c = paste(a, b, sep="_"))
+```
+
+## Count birds
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 plot <- c(rep(1, 2), rep(2, 4), rep(3, 3))
 bird <- as.factor(c('a', 'b', 'a', 'b', 'c', 'd', 'a', 'b', 'c'))
 area <- c(rep(10, 2), rep(5, 4), rep(15, 3))
@@ -607,13 +720,15 @@ birdlist
 
 birdlist %>%
   group_by(plot, area) %>%
-  dplyr::summarize(bird = n(), # when summarize doesn't work directly use it (dplyr::)like this
-                   .groups = "drop") # to summarize of a column with reference to two other variables. 
+  summarise(bird = n(), .groups = "drop") 
+
+# (dplyr::summarise)like this
+# to summarize of a column with reference to two other variables. 
 ```
 
-# count sites
+## count sites
 
-```{r}
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 treatment <- c(rep('ab', 2), rep('bgrnf', 8), rep('bgpnf', 4))
 site <- c(
   'ab1',
@@ -627,15 +742,15 @@ site <- c(
   rep('bgpnf2', 2)
 )
 data <- data.frame(treatment, site)
-library(tidyverse)
+
 # to find the site per each treatment
 data %>% group_by(treatment) %>% count(treatment, name = '#sites')
 
 ```
 
-# count within years
- 
-```{r}
+## count within years
+
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 year <-  c(rep(2000, 4), 
            rep(2001, 4), 
            rep(2002, 4)
@@ -657,32 +772,44 @@ df %>%
   group_by(site) %>%
   summarize(
     Burnt_once = sum(fire == "yes" &
-                       year %in% c(2000, 2001, 2002)) == 1, # in these years look for 1 'yes'
+                       year %in% c(2000, 2001, 2002)) == 1,
     Burnt_twice = sum(fire == "yes" &
-                        year %in% c(2000, 2001, 2002)) == 2, # in these years look for 2 'yes'
+                        year %in% c(2000, 2001, 2002)) == 2,
     Burnt_thrice = sum(fire == "yes" &
-                         year %in% c(2000, 2001, 2002)) == 3 # in these years look for 3 'yes'
-  ) %>% # returns a logical vector
-  mutate(
+                         year %in% c(2000, 2001, 2002)) == 3
+  ) %>%  mutate(
     Burnt_once = ifelse(Burnt_once, 1, 0),
     Burnt_twice = ifelse(Burnt_twice, 1, 0),
     Burnt_thrice = ifelse(Burnt_thrice, 1, 0)
-  ) %>% # convert logical response to numeric
-  summarise( # summarise data
-    across( # specifycolumns
-      where(is.numeric), # select columns with numeric ones
-      ~ sum( # selected column using the ~ formula notation
-        .x, # for each selected columns
-        na.rm = TRUE))) # remove any missing values before calculating the sum
+  ) %>%  summarise(across(where(is.numeric),    ~ sum(.x,   na.rm = TRUE))) 
+
+# df %>%
+#   group_by(site) %>%
+#   summarize(
+#     Burnt_once = sum(fire == "yes" &
+#                        year %in% c(2000, 2001, 2002)) == 1, # in these years look for 1 'yes'
+#     Burnt_twice = sum(fire == "yes" &
+#                         year %in% c(2000, 2001, 2002)) == 2, # in these years look for 2 'yes'
+#     Burnt_thrice = sum(fire == "yes" &
+#                          year %in% c(2000, 2001, 2002)) == 3 # in these years look for 3 'yes'
+#   ) %>% # returns a logical vector
+#   mutate(
+#     Burnt_once = ifelse(Burnt_once, 1, 0),
+#     Burnt_twice = ifelse(Burnt_twice, 1, 0),
+#     Burnt_thrice = ifelse(Burnt_thrice, 1, 0)
+#   ) %>% # convert logical response to numeric
+#   summarise( # summarise data
+#     across( # specifycolumns
+#       where(is.numeric), # select columns with numeric ones
+#       ~ sum( # selected column using the ~ formula notation
+#         .x, # for each selected columns
+#         na.rm = TRUE))) # remove any missing values before calculating the sum
+
 ```
 
+## case when new column
 
-
-
-
-
-# case when new column  
-```{r}
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 library(dplyr)
 library(stringr)
 feedback <-
@@ -694,10 +821,42 @@ df <- data.frame(book, feedback)
 df %>%
   mutate(response = case_when(str_starts(feedback, 'good') ~ 'good')) %>%
   select(book, response) %>% as_tibble()
+
+
 ```
-# separate 
-text to columns
-```{r echo=TRUE}
+
+## Case when
+
+```{r case when}
+names(iris)
+iris %>% 
+  mutate(species.code= case_when(
+    Species== 'setosa' ~ 1,
+    Species== 'versicolor' ~ 2,
+    Species== 'virginica' ~ 3
+  )) %>% head()
+```
+
+## Use of if else
+
+```{r}
+library(dplyr)
+
+iris %>%
+  select(Species) %>%
+  slice_sample(n = 10) %>%
+  mutate(
+    code = if_else(Species == 'setosa', 1, 0) # you might see different result!
+  )
+
+
+```
+
+
+
+## Separate text to columns  
+
+```{r separate, echo=TRUE}
 df <-
   data.frame(films = c("Spider_man", "James_bond", "Iron_man", "Bat_man"))
 df
@@ -705,13 +864,16 @@ df1 <- df %>%
   separate(films, c("a", "b"), sep = '([_])')
 df1
 ```
-# unite
-```{r}
+
+## Unite text
+
+```{r unite}
 df1 %>% unite("names", a:b, remove=FALSE)
 ```
 
-# join
-```{r}
+## Join
+
+```{r join}
 df1 <-
   data.frame(
     id = c(1:4) ,
@@ -721,37 +883,45 @@ df1 <-
 df2 <- data.frame(id = c(1:4) , country = rep("us", 4))
 df3 <- left_join(df1, df2, by = "id")
 ```
-# spread & gather 
-We are making a wide format from long format in the first example.
-The second example is to make a long format from wide.
-```{r}
+
+## Spread & gather
+
+We are making a wide format from long format in the first example. The second example is to make a long format from wide.
+
+```{r spread, tidy='styler', tidy.opts=list(strict=FALSE)}
 # the following is already in long format
 classdata <- data.frame(
   studentname = c('captian', 'ant', 'james', 'spider', 'tony', 'bat', 'wonder'),
-  sibject = c('math', 'his', 'math', 'geo', 'his', 'geo', 'math'),
+  subject = c('math', 'his', 'math', 'geo', 'his', 'geo', 'math'),
   grade = c('A+', 'B', 'B', 'A+', 'C', 'B+', 'C')
 )
 
 classdata %>% head()
 
-wide.class <- spread(classdata, # name of the data frame
-                     sibject, # new columns to be made
-                     grade) # values to go into new columns
+wide.class <- spread(classdata,  subject,  grade) 
+# classdata= name of the data frame
+# subject= new columns to be made
+# grade= values to go into new columns
+
 
 head(wide.class)
 
-gather(wide.class, # name of the data frame
-       subject, # name of the column to put data into
-       grade, # name of the column to put value into
-       geo, his, math) %>% # from where values has to be gathered
+gather(wide.class, subject,  grade, geo, his, math) %>% 
   drop_na()
+
+# wide.class= name of the data frame
+# subject= name of the column to put data into
+# grade= name of the column to put value into
+# geo, his, math= from where values has to be gathered
+
 
 ```
 
+## Join rows
 
-## join rows
 bind rows
-```{r}
+
+```{r bind, tidy='styler', tidy.opts=list(strict=FALSE)}
 df1 <-
   data.frame(
     id = c(1:4) ,
@@ -765,9 +935,11 @@ df2 <-
 dplyr::bind_rows(df1, df2)
 ```
 
-# across
-for multiple variables 
-```{r}
+## Across
+
+For multiple variables
+
+```{r, across, tidy='styler', tidy.opts=list(strict=FALSE)}
 library(tidyverse)
 srno <- c(1:2)
 film <- c("arabica", "robust")
@@ -784,17 +956,20 @@ films <- films %>%
 str(films)
 
 ```
-# everthing 
-select a key variable and everything or every other columns.
 
-```{r}
+## Everthing
+
+Select a key variable and everything or every other columns.
+
+```{r everything}
 library(gapminder)
 gapminder %>% select(pop, everything()) %>% head (3)
 ```
 
-# toupper
-# tolower
-```{r}
+## toupper and lower
+
+
+```{r to upper}
 library(stringr)
 
 data <- data.frame(Dose.Cm = c("d1", "D2", "D3"),
@@ -805,9 +980,9 @@ data %>% mutate(Dose.Cm = tolower(Dose.Cm), Len.km = toupper(Len.km))
 
 ```
 
-# factor
+## factor
 
-```{r}
+```{r factor}
 data <- data.frame(Dose.Cm = c("d1", "D2", "D3"),
                    Len.km = c("high", 'low', 'medium'))
 data <- data %>% mutate(len = as.factor(Len.km))
@@ -815,17 +990,17 @@ data <- data %>% mutate(len = as.factor(Len.km))
 glimpse(data)
 ```
 
-# change order of factor
+## change order of factor
 
-```{r}
+```{r order}
 data %>% mutate(len= fct_relevel(len, c('low', 'medium', 'high')))
 ```
 
+## parse_number
 
-# parse_number
 This drops any non-numeric characters before or after the first number. The grouping mark specified by the locale is ignored inside the number.
 
-```{r}
+```{r number}
 
 library(tidyverse)
 class <- c('8th', '9th', '10th')
@@ -840,8 +1015,9 @@ school %>% mutate(students = parse_number(students))
 # now students because number with first value of the column
 ```
 
-# pivot longer
-```{r}
+## pivot longer
+
+```{r pivot longer}
 library(tidyverse)
 
 rawdata <-
@@ -856,8 +1032,9 @@ data <-
   )
 ```
 
-# Pivot wider
-```{r}
+## Pivot wider
+
+```{r pivot wider}
 library(tidyverse)
 
 df <- data.frame(
@@ -887,9 +1064,9 @@ df1 %>% mutate(id = row_number()) %>%
 
 ```
 
-# Scoring numbers to likert
+## Scoring numbers to likert
 
-```{r}
+```{r, scoring, tidy='styler', tidy.opts=list(strict=FALSE)}
 library(tidyverse)
 numbers <- data.frame(test = seq(1:10))
 
@@ -903,13 +1080,14 @@ numbers <- numbers %>% mutate(test1 = as.factor(test1)) %>%
     '3' = 'high'
   ))
 ```
-# ggplot
+
+# Ggplot
 
 [sthda](http://sthda.com/english/wiki/ggplot2-barplots-quick-start-guide-r-software-and-data-visualization)
 
+## add border to points
 
-## add border to points  
-```{r}
+```{r point}
 library(ggplot2)
 ggplot(iris, aes(x= Petal.Length, 
                    y= Petal.Width, fill= Species), alpha= 0.07)+
@@ -920,15 +1098,14 @@ ggplot(iris, aes(x= Petal.Length,
 
 ```
 
-
 ```{r}
 df <- data.frame(dose=c("D0.5", "D1", "D2"),
                 len=c(4.2, 10, 29.5))
 ```
 
-## bar plot 
+## bar plot
 
-```{r}
+```{r barplot}
 library(ggplot2)
 # Basic barplot
 p<-ggplot(data=df, aes(x=dose, y=len)) +
@@ -955,9 +1132,9 @@ p <- ggplot(data = df, aes(x = dose, y = len)) +
 p
 ```
 
-## labels  
+## labels
 
-```{r}
+```{r labels}
 # out side the bars
 p+ geom_text(aes(label=len), vjust=-0.3, size=3.5)+
   theme_minimal()
@@ -968,7 +1145,7 @@ p+geom_text(aes(label=len), vjust=1.6, color="white", size=3.5)+
 
 ## geom_vline
 
-```{r}
+```{r vline}
 df <- data.frame(
   dose = c("D0.5", "D1", "D2", 'pp', 'kk', 'rr'),
   len = c(4.2, 10, 29.5, 12, 15, 23)
@@ -983,15 +1160,18 @@ ggplot(df, aes(len)) +
 ```
 
 ## scatter plot with lm
-```{r}
+
+```{r reg line}
 library(ggplot2)
 
 ggplot(iris, aes(Petal.Length, Petal.Width)) +
   geom_point() +
   geom_smooth(method = 'lm')
 ```
+
 ## raincloud plot
-```{r}
+
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 library(ggdist)
 library(tidyverse)
 library(tidyquant)
@@ -1037,7 +1217,7 @@ mpg %>% filter(cyl %in% c(4, 6, 8)) %>%
 
 ## hex plot
 
-```{r}
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 library(tidyverse)
 # install.packages("hexbin")
 class <- c(rep('10th', 8))
@@ -1078,7 +1258,31 @@ school %>% mutate(students = parse_number(students)) %>%
   labs(fill = 'students', title = 'school students')
 ```
 
-## stat summary   
+## Subscript and superscript
+```{r}
+ggplot(iris, aes(x= Species, y= Sepal.Length ))+
+  geom_boxplot()+
+  labs(x=expression(text[subscript]), y= expression(text^superscript))
+```
+
+
+## Two subtitles in two different positions in ggplot2
+
+```{r}
+library(ggplot2)
+library(dplyr, warn = FALSE)
+iris %>%
+  filter(Species != "setosa") %>%
+  ggplot(aes(x = Petal.Length, y = Petal.Width)) +
+  geom_point() +
+  facet_wrap(~Species) +
+  theme(
+    strip.background.x = element_blank(),
+    strip.text.x = element_text(hjust = 0, size = 11)
+  )
+```
+
+## stat summary
 
 ```{r}
 income.data <- data.frame(Village = c(rep('Chittor', 20),
@@ -1097,7 +1301,8 @@ ggplot(income.data, aes(Village, Income)) +
                col = 'red')
 ```
 
-## geom_density  
+## geom_density
+
 ```{r}
 income.data <- data.frame(Village = c(rep('Chittor', 20),
                                       rep('Bellari', 20)),
@@ -1120,6 +1325,7 @@ ggplot(income.data) +
 ```
 
 ## reorder axis
+
 ```{r}
 library(tidyverse)
 # Using median
@@ -1135,7 +1341,6 @@ mpg %>%
   theme(legend.position = "none") +
   xlab("")
 ```
-
 
 ## pie chart
 
@@ -1160,10 +1365,85 @@ fig <- fig %>% add_pie(hole = 0.4) %>%
 
 fig
 ```
-
-## annotate   
+ 
+## barplot with error bar   
 
 ```{r}
+# create dummy data
+data <- data.frame(
+  name=letters[1:5],
+  value=sample(seq(4,15),5),
+  sd=c(1,0.2,3,2,4)
+)
+
+# Most basic error bar
+library(viridis)
+
+ggplot(data) +
+  geom_bar(
+    aes(x = name, y = value),
+    stat = "identity",
+    fill = "skyblue",
+    alpha = 0.7
+  ) +
+  scale_fill_viridis_d()+
+  geom_errorbar(
+    aes(
+      x = name,
+      ymin = value - sd,
+      ymax = value + sd
+    ),
+    width = 0.4,
+    colour = "orange",
+    alpha = 0.9,
+    linewidth = 1.3
+  )
+
+```
+
+## Expressions on labs
+
+```{r}
+test <- iris %>% 
+  select(Species, Sepal.Length) %>% 
+  ggplot()+
+  geom_boxplot(aes(Species, Sepal.Length, fill= Species))+
+  labs(y= expression(paste("Sepal ", length[(`in cm`)])))
+
+```
+
+## Themes  
+
+```{r theme}
+library(viridis)
+iris %>% 
+  select(Species, Sepal.Length) %>% 
+  ggplot()+
+  geom_boxplot(aes(Species, Sepal.Length, fill= Species))+
+  scale_color_viridis(discrete = T, option="D")  + 
+  scale_fill_viridis(discrete = T, option="D")  + 
+  theme_bw(base_size=14 ) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), strip.background = element_rect(colour="black", fill="white"),
+                                  legend.position=" ")+
+  labs(subtitle= '(some sub title)')+
+  guides(fill= 'none')
+```
+
+
+```{r}
+library(ggThemeAssist)
+test <- iris %>% 
+  select(Species, Sepal.Length) %>% 
+  ggplot()+
+  geom_boxplot(aes(Species, Sepal.Length, fill= Species))+
+  labs(y= expression(paste("Sepal ", length[(`in cm`)])))
+
+# run the ggThemeAssistGadget(test)
+```
+
+
+## annotate
+
+```{r, tidy='styler', tidy.opts=list(strict=FALSE)}
 library(tidyverse)
 df <- tribble(~ gender,
               ~ height,
@@ -1215,8 +1495,8 @@ ggplot(df, aes(gender, height)) +
   )
 ```
 
-
 ## months
+
 ```{r}
 library(lubridate)
 months <- seq(month(1:12)) # make moths
@@ -1244,11 +1524,9 @@ df <- df %>% mutate(date= as.Date(date, format="%m/%d/%Y")) %>%
 df
 ```
 
-
 ```{r}
 p + scale_x_discrete(limits = c("D0.5", "D2"))
 ```
-
 
 ```{r}
 df2 <- data.frame(
@@ -1259,7 +1537,7 @@ df2 <- data.frame(
 ```
 
 ```{r}
-ggplot(data = df2, aes(x = dose, y = len, fill = supp)) +
+p <- ggplot(data = df2, aes(x = dose, y = len, fill = supp)) +
   geom_bar(stat = "identity", position = position_dodge()) +
   geom_text(
     aes(label = len),
@@ -1270,6 +1548,7 @@ ggplot(data = df2, aes(x = dose, y = len, fill = supp)) +
   ) +
   scale_fill_brewer(palette = "Paired") +
   theme_minimal()
+
 ```
 
 ```{r}
@@ -1294,9 +1573,10 @@ p + scale_fill_manual(values = c('#999999', '#E69F00'))
 p + scale_fill_brewer(palette = "Blues")
 ```
 
-## Color Palettes  
+## Color Palettes
 
 libraries
+
 ```{r}
 # install.packages('MetBrewer')
 library(MetBrewer)
@@ -1318,8 +1598,7 @@ plot <- gapminder %>%
 plot + geom_point(aes(gdpPercap, lifeExp, size = pop / 1000000))
 ```
 
-To use color in the plot, assign the Population variable to the color aesthetic.
-Since nothing is specied, ggplot2 chooses a color spectrum for this numerical variable (shades of blue).
+To use color in the plot, assign the Population variable to the color aesthetic. Since nothing is specied, ggplot2 chooses a color spectrum for this numerical variable (shades of blue).
 
 ```{r}
 plot + geom_point(aes(
@@ -1329,9 +1608,8 @@ plot + geom_point(aes(
   color = pop / 1000000
 ))
 ```
-To control the color spectrum, we need to introduce a color scale. In the
-following plot, we have to provide a vector of hex color values. You would choose this if
-you got your colors from one of the mentioned above websites.
+
+To control the color spectrum, we need to introduce a color scale. In the following plot, we have to provide a vector of hex color values. You would choose this if you got your colors from one of the mentioned above websites.
 
 ```{r}
 plot + geom_point(aes(
@@ -1343,10 +1621,7 @@ plot + geom_point(aes(
   scale_color_gradientn(colors = c("#003049", "#D62828", "#F77F00", "#FCBF49", "#EAE2B7"))
 ```
 
-To apply one of the MetBrewer palettes, replace the hex-vector with a
-MetBrewer function. Within the function call, you provide the palette’s name,
-then several colors, and tell it that we need a continuous palette since it is a
-numerical variable.
+To apply one of the MetBrewer palettes, replace the hex-vector with a MetBrewer function. Within the function call, you provide the palette’s name, then several colors, and tell it that we need a continuous palette since it is a numerical variable.
 
 ```{r}
 plot + geom_point(aes(
@@ -1358,19 +1633,14 @@ plot + geom_point(aes(
   scale_color_gradientn(colors = met.brewer('Cross', n = 500, type = 'continuous'))
 ```
 
-You might also want to use color palettes with non-numerical variables. Let us
-assume we want to apply color to the Continent variable. This implies using a
-manual color scale and providing a MetBrewer palette.
-
+You might also want to use color palettes with non-numerical variables. Let us assume we want to apply color to the Continent variable. This implies using a manual color scale and providing a MetBrewer palette.
 
 ```{r}
 plot + geom_point(aes(gdpPercap, lifeExp, size = pop / 1000000, color = continent)) +
   scale_color_manual(values = met.brewer('Navajo', 5))
 ```
 
-Please note if you want to apply color to the fill aesthetic rather than the color
-aesthetic, consider using the scale_fill_manuel function instead of the
-scale_color_manuel. This is useful for boxplots or bar charts. 
+Please note if you want to apply color to the fill aesthetic rather than the color aesthetic, consider using the scale_fill_manuel function instead of the scale_color_manuel. This is useful for boxplots or bar charts.
 
 ```{r}
 gapminder %>%
@@ -1382,8 +1652,10 @@ gapminder %>%
 ```
 
 ## scale fill manual
+
 ## themes
-```{r}
+
+```{r, themes}
 df <- data.frame(Names = as.factor(c('Bacteria', 'Yeast', 'None')),
                  Quantity = c(2.5, 5.5, 7.5))
 
@@ -1406,20 +1678,22 @@ ggplot(df, aes(Names, Quantity, fill = Names)) +
   ) +
   theme(text = element_text(size = 22))
 
+# ggThemeAssist::ggThemeAssistGadget(name of the plot)
+
 ```
 
-
 ### graphics
-```{r}
+
+```{r, graphics}
 x11() # opne a new window for graphics
 graphics.off() # close the new window 
 ```
 
-## Normal distribution  
+## Normal distribution
 
 Normal distribution, also known as the Gaussian distribution, is a probability distribution that is symmetric about the mean, showing that data near the mean are more frequent in occurrence than data far from the mean.
 
-```{r}
+```{r, Normal distribution}
 library(tidyverse)
 n = 1000
 mean = 170 # cm
@@ -1445,12 +1719,43 @@ ggplot(df, aes(
     fun = function(x)
       dnorm(x, mean = mean, sd = sd) * n * binwidth,
     color = "darkred",
-    size = 1
+    linewidth = 1
   )
 
 ```
 
-## Legend  
+## wordcloud
+
+```{r, wordcloud}
+library(googlesheets4)
+library(dplyr)
+library(wordcloud)
+library(RColorBrewer)
+
+# gs4_auth()
+path <- ('https://docs.google.com/spreadsheets/d/1ac8CuAQdRNXp9MjKsG7YWiHcT64tRgnCqlY9UhX-jEo/edit?usp=sharing')
+test <- read_sheet (path)
+
+head(test,3)
+
+test1 <- data.frame(test %>% select(topic) %>% count(topic) %>% mutate(count= n*10))
+head(test1,3)
+max(test1$count)
+
+set.seed(123)
+
+wordcloud(words = test1$topic, 
+          freq = test1$count,
+          min.freq = 10,
+          max.words = 50,
+          colors = brewer.pal(7, 'BrBG'))
+
+# export the file as .pdf
+
+```
+
+
+## Legend
 
 ```{r}
 df <- data.frame(
@@ -1511,53 +1816,8 @@ ggplot(df, aes(
 
 ```
 
-## Map  
 
-```{r}
-# packages----
-library(sf) #
-library(tidyverse) #
-
-india.shape <-
-  sf::st_read('C:/Users/ty00osat/OneDrive/R_projects/tidyandwork/india_shp_files/Admin2.shp') # all 8 files in the folder are required.
-
-# plot(shp)
-
-state_area <- read.csv('state_area.csv')
-state_area <- state_area %>% rename(ST_NM = id)
-
-shape.file <- fortify(india.shape, region = "ST_NM")
-
-# names(shp)
-# names(imr)
-# names(shp.f)
-
-merge.Indshp.area <- left_join(shape.file, state_area, by = "ST_NM")
-
-final.plot <- merge.Indshp.area %>%
-  arrange(areaRank)
-
-india <- ggplot() +
-  geom_sf(data = final.plot, aes(fill = areaRank, alpha = 0.2), col = 'black')+
-  theme(legend.position = ' ')
-
-# add specific location to the map
-
-places <- data.frame(name= c('Delhi', 'Mumbai'),
-                     Lat=c(28.7041, 19.0760),
-                     Long= c(77.1025, 72.8777))
-
-
-india+
-  geom_point(data= places, (aes(x= Long, y= Lat, col= name)))+
-  geom_text(data= places, aes(x= Long, y= Lat, label=name ), size=3, fontface= 'bold',  col= 'white')
-
-# ggsave("animalstudy.jpg",dpi = 300, width = 20, height = 20, units = "cm")
-
-```
-
-# ggflowchart  
-
+# ggflowchart
 
 ```{r}
 # install.packages("ggflowchart")
@@ -1570,12 +1830,12 @@ ggflowchart(data)
 
 ```
 
-[talk](https://www.youtube.com/watch?v=_2miUEt81nI)
-[blog](https://nrennie.rbind.io/blog/introducing-ggflowchart/)
+[talk](https://www.youtube.com/watch?v=_2miUEt81nI) [blog](https://nrennie.rbind.io/blog/introducing-ggflowchart/)
 
 # Functions
 
 ### dice
+
 ```{r}
 dice <- c(1:6)
 
@@ -1586,6 +1846,7 @@ myluck <- function(x) {
 
 myluck()
 ```
+
 ### pick a name
 
 ```{r}
@@ -1598,7 +1859,35 @@ who <- function(x) {
 who()
 ```
 
+# DAG
+
+```{r}
+library(dagitty) 
+
+sapling <- dagitty('dag{
+    Treatment-> RCD <- Livestock;
+    Trench -> RCD
+}')
+coordinates( sapling ) <-
+  list( x=c(Treatment=1,  Livestock= 2, Trench= 2, RCD=2 # column 2
+            ),
+        y=c(Treatment=0,   RCD=0,  Livestock= -1,  Trench= 1 ))
+
+# Treatment=1 column 1
+# Livestock= 2, column 2
+# Trench= 2, column 2
+# RCD=2 column 2
+
+# Treatment=0, middle row/0 
+# RCD=0, middle row/0 
+# Livestock= -1, above middle row -1
+# Trench= 1  below the middle row/1
+
+plot(sapling)
+```
+
 # function to split
+
 ```{r}
 
 df <-
@@ -1614,25 +1903,55 @@ shorten <- function(df) {
 shorten(df)
 ```
 
+# Model
+
+### Model with interaction
+
+[Model interaction](https://youtu.be/yJnHmCMb1q4)
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+data <- data.frame(
+  sex= rep(c('male', 'female'), each= 20),
+  weight=c(rnorm(20, mean= 65, 5), rnorm(20, mean = 55, 5)),
+  height=c(rnorm(20, mean= 165, 6), rnorm(20, mean = 152, sd= 6)))
+
+
+# Plot the interaction using ggplot2
+data %>%
+  ggplot(aes(x = height, 
+             y = weight, 
+             color = sex
+             )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+
+
+
+```
+
 # web scraping
 
 ```{r}
 library(rvest)
-page <- read_html("https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population")
-
-tables <- html_table(page)
-typeof(tables)
-unlist(tables)
-
-table2 <- as.data.frame(tables[[2]])
-head(table2,2)
+# page <- read_html("https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population")
+# 
+# tables <- html_table(page)
+# typeof(tables)
+# unlist(tables)
+# 
+# table2 <- as.data.frame(tables[[2]])
+# head(table2,2)
 
 ```
 
+# Rmarkdown
 
-
-# Rmarkdown  
 ## knitr golbal options
+
 to apply to every chunk in the file
 
 inside the `chunk` write `knitr::opts_chunk$set(include= ,echo = , message= , warning= )`
@@ -1641,10 +1960,10 @@ inside the `chunk` write `knitr::opts_chunk$set(include= ,echo = , message= , wa
 # knitr::opts_chunk$set(message = TRUE, echo = TRUE, warning = TRUE)
 ```
 
-`include:` to show or hide code and results from appearing        
-`echo:` to show or hide code in the output but shows result       
-`message` to hide or show the messages generated by the code        
-`warning:` to show or hide warning generated by the code  
+`include:` to show or hide code and results from appearing\
+`echo:` to show or hide code in the output but shows result\
+`message` to hide or show the messages generated by the code\
+`warning:` to show or hide warning generated by the code
 
 these options can be written for individual chunks as well
 
@@ -1653,108 +1972,100 @@ sum(2, 3) # here the knitr global option is over written inside the {}
 ```
 
 ### headings
-1 # heading 1  
-2 ## heading 2
-3 ### heading 3
 
+1 \# heading 1\
+2 \## heading 2 3 \### heading 3
 
-*italics*   
-_italic_  
+*italics*\
+*italic*
 
-**bold**  
-__bold__  
+**bold**\
+**bold**
 
-`plot()` to show r code/function  
+`plot()` to show r code/function\
 @Saneesh
 
-## blockquotes are writtedn after >
+## blockquotes are writtedn after \>
 
-> this is a blockquote  
->--- Saneesh
+> this is a blockquote\
+> --- Saneesh
 
 ## plain code
 
-```
+```         
 hello
 ```
 
-## unordered items  
+## unordered items
 
-- item 1  
-- item 2  
-  - sub item 1a  
-  - sub item 2b  
+-   item 1\
+-   item 2
+    -   sub item 1a\
+    -   sub item 2b
 
 ## ordered items
-1. Item 1  
-2. Item 2  
-   + Item 2a  # give two spaces before the +
-   + Item 2b  
+
+1.  Item 1\
+2.  Item 2
+    -   Item 2a \# give two spaces before the +
+    -   Item 2b
 
 ## writing mathematical functions
 
 ## adding a link
+
 ```{r}
 # [mathematical notations](https://rpruim.github.io/s341/S19/from-class/MathinRmd.html)
 ```
 
-$by$  `$by$`  
-$\mu$  `$\mu$`  
-$\sum$   `$\sum$`   
-$a\pm b$   `$a\pm b$`  
-$x=y$  `$x=y$`  
-$x>y$  `$x>y$`   
-$x^2$ `$x^2$`   
-$x\le y$  `$x\le y$`   
+$by$ `$by$`\
+$\mu$ `$\mu$`\
+$\sum$ `$\sum$`\
+$a\pm b$ `$a\pm b$`\
+$x=y$ `$x=y$`\
+$x>y$ `$x>y$`\
+$x^2$ `$x^2$`\
+$x\le y$ `$x\le y$`
 
-$\sum_{n=1}^{10} n^2$   `$\sum_{n=1}^{10} n^2$`   
-$LUI_i=\frac12(gi/gm)+\frac12(ti/tm)$  `$LUI_i=\frac12(gi/gm)+\frac12(ti/tm)$` 
-$x_{1}+ x_{2}+\cdots+x_{n}$  `$x_{1}+ x_{2}+\cdots+x_{n}$`   
-$|A|$  `$|A|$`   
-$A\subset B$  `$A\subset B$`   
-$A \subseteq B$ `$A \subseteq B$`    
-$A \cup B$ `$A \cup B$`   
-$A \cap B$ `$A \cap B$`   
-$P(A|B)$  `$P(A|B)$`   
-$\alpha$  `$\alpha$`  
-$\beta$ `$\beta$`    
-$\gamma$ `$\gamma$`    
-$\theta$  `$\theta$`  
-$H_2O$ `$H_2O$`  
- 
+$\sum_{n=1}^{10} n^2$ `$\sum_{n=1}^{10} n^2$`\
+$LUI_i=\frac12(gi/gm)+\frac12(ti/tm)$ `$LUI_i=\frac12(gi/gm)+\frac12(ti/tm)$` $x_{1}+ x_{2}+\cdots+x_{n}$ `$x_{1}+ x_{2}+\cdots+x_{n}$`\
+$|A|$ `$|A|$`\
+$A\subset B$ `$A\subset B$`\
+$A \subseteq B$ `$A \subseteq B$`\
+$A \cup B$ `$A \cup B$`\
+$A \cap B$ `$A \cap B$`\
+$P(A|B)$ `$P(A|B)$`\
+$\alpha$ `$\alpha$`\
+$\beta$ `$\beta$`\
+$\gamma$ `$\gamma$`\
+$\theta$ `$\theta$`\
+$H_2O$ `$H_2O$`
+
 ## adding image and caption
-
 
 ```{r,echo=FALSE,out.width="70%",fig.align="center",fig.cap='write'}
 knitr::include_graphics("Idly.jpg") # keep the image in the project folder.
 ```
- 
-Inside a chunk after three ...   `r`, `echo=FALSE,out.width="70%",fig.align="center",fig.cap='write'` close the curly bracket, then write knitr::include_graphics("Idly.jpg") # keep the image in the project folder, then close the chunk. with '```'
 
+Inside a chunk after three ... `r`, `echo=FALSE,out.width="70%",fig.align="center",fig.cap='write'` close the curly bracket, then write knitr::include_graphics("Idly.jpg") \# keep the image in the project folder, then close the chunk. with '\`\`\`'
 
 ![Idly](Idly.jpg)
 
 write an exclamation mark `!`, then square brackets `[caption]` write caption in it, the normal brackets `(Idly.jpg)` write the name of the file and it's extension i.e., `idly.jpg`
 
+# Resources
 
-
-# Resources  
-[bbcplot](https://bbc.github.io/rcookbook/)  
-[colorhunt](https://colorhunt.co/)  
-[colors](https://coolors.co/)  
-[colorpaletts](https://colorpalettes.net/)  
-[colorpaletts](https://www.canva.com/colors/color-palettes/)  
-[coloradobe](https://color.adobe.com/de/create/color-wheel)  
-[colormind](http://colormind.io/)  
-[datavizpyr](https://datavizpyr.com/category/r/ggplot2/)  
-[datatoviz](https://www.data-to-viz.com/)  
-[Cédric Scherer](https://github.com/z3tt)  
-[ggplottheme](https://ggplot2.tidyverse.org/reference/theme.html)  
-[mycolor](https://mycolor.space/)  
-[viz-palette](https://projects.susielu.com/viz-palette)   
+[bbcplot](https://bbc.github.io/rcookbook/)\
+[colorhunt](https://colorhunt.co/)\
+[colors](https://coolors.co/)\
+[colorpaletts](https://colorpalettes.net/)\
+[colorpaletts](https://www.canva.com/colors/color-palettes/)\
+[coloradobe](https://color.adobe.com/de/create/color-wheel)\
+[colormind](http://colormind.io/)\
+[datavizpyr](https://datavizpyr.com/category/r/ggplot2/)\
+[datatoviz](https://www.data-to-viz.com/)\
+[Cédric Scherer](https://github.com/z3tt)\
+[ggplottheme](https://ggplot2.tidyverse.org/reference/theme.html)\
+[mycolor](https://mycolor.space/)\
+[viz-palette](https://projects.susielu.com/viz-palette)\
 [Intro to r](https://intro2r.com/r-markdown-anatomy.html)
-
-
-
-
-
